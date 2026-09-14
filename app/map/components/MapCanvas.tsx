@@ -2,15 +2,11 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import Map, {
-  Marker,
-  NavigationControl,
-  Popup,
-  type ViewState,
-} from "react-map-gl/mapbox";
+import { LocateFixed, MapPin } from "lucide-react";
+import Map, { Marker, NavigationControl, Popup, type ViewState } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-type MapEvent = {
+export type MapEvent = {
   _id: string;
   name?: string;
   description?: string;
@@ -24,11 +20,10 @@ type MapEvent = {
   dateString?: string;
   eventDate?: number;
   price?: number;
-  ticketsSold?: number;
   imageUrl?: string | null;
 };
 
-type TimeMode = "all" | "tonight" | "weekend";
+export type TimeMode = "all" | "tonight" | "weekend";
 
 const DEFAULT_VIEW: ViewState = {
   longitude: -90.0715,
@@ -39,245 +34,155 @@ const DEFAULT_VIEW: ViewState = {
   padding: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
-function formatDate(event: MapEvent) {
-  const raw = event.eventDate ?? (event.dateString ? Date.parse(event.dateString) : NaN);
-  if (!Number.isFinite(raw)) return event.dateString || "Date coming soon";
+const timestamp = (event: MapEvent) =>
+  event.eventDate ?? (event.dateString ? Date.parse(event.dateString) : NaN);
 
+function formatDate(event: MapEvent) {
+  const raw = timestamp(event);
+  if (!Number.isFinite(raw)) return event.dateString || "Date coming soon";
   return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
+    weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
   }).format(new Date(raw));
 }
 
 function locationLabel(event: MapEvent) {
-  return (
-    event.venueName ||
-    event.venueAddress ||
+  return event.venueName || event.venueAddress ||
     [event.city, event.state].filter(Boolean).join(", ") ||
-    event.location ||
-    "Location coming soon"
-  );
+    event.location || "Location coming soon";
 }
 
-function isTonight(event: MapEvent) {
-  const raw = event.eventDate ?? (event.dateString ? Date.parse(event.dateString) : NaN);
+function matchesTime(event: MapEvent, mode: TimeMode) {
+  if (mode === "all") return true;
+  const raw = timestamp(event);
   if (!Number.isFinite(raw)) return false;
   const date = new Date(raw);
   const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-}
-
-function isThisWeekend(event: MapEvent) {
-  const raw = event.eventDate ?? (event.dateString ? Date.parse(event.dateString) : NaN);
-  if (!Number.isFinite(raw)) return false;
-
-  const now = new Date();
+  if (mode === "tonight") {
+    return date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+  }
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
-  const daysUntilFriday = (5 - start.getDay() + 7) % 7;
-  start.setDate(start.getDate() + daysUntilFriday);
-
+  start.setDate(start.getDate() + ((5 - start.getDay() + 7) % 7));
   const end = new Date(start);
   end.setDate(end.getDate() + 3);
-
-  const eventDate = new Date(raw);
-  return eventDate >= start && eventDate < end;
+  return date >= start && date < end;
 }
 
-export default function MapCanvas({ events = [] }: { events: MapEvent[] }) {
+export default function MapCanvas({ events = [], timeMode }: { events: MapEvent[]; timeMode: TimeMode }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [timeMode, setTimeMode] = useState<TimeMode>("all");
   const [viewState, setViewState] = useState<ViewState>(DEFAULT_VIEW);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "loading" | "error">("idle");
 
-  const filteredEvents = useMemo(() => {
-    if (timeMode === "tonight") return events.filter(isTonight);
-    if (timeMode === "weekend") return events.filter(isThisWeekend);
-    return events;
-  }, [events, timeMode]);
-
-  const mappedEvents = useMemo(
-    () =>
-      filteredEvents.filter(
-        (event) =>
-          Number.isFinite(event.latitude) &&
-          Number.isFinite(event.longitude) &&
-          Math.abs(Number(event.latitude)) <= 90 &&
-          Math.abs(Number(event.longitude)) <= 180,
-      ),
-    [filteredEvents],
-  );
-
-  const selectedEvent =
-    mappedEvents.find((event) => event._id === selectedId) ?? null;
-
+  const visibleEvents = useMemo(() => events.filter((event) => matchesTime(event, timeMode)), [events, timeMode]);
+  const mappedEvents = useMemo(() => visibleEvents.filter((event) =>
+    Number.isFinite(event.latitude) && Number.isFinite(event.longitude) &&
+    Math.abs(Number(event.latitude)) <= 90 && Math.abs(Number(event.longitude)) <= 180
+  ), [visibleEvents]);
+  const selectedEvent = mappedEvents.find((event) => event._id === selectedId) ?? null;
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+  const focusEvent = (event: MapEvent) => {
+    setSelectedId(event._id);
+    setViewState((current) => ({
+      ...current,
+      longitude: Number(event.longitude),
+      latitude: Number(event.latitude),
+      zoom: Math.max(current.zoom, 12),
+    }));
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      return;
+    }
+    setLocationStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setViewState((current) => ({ ...current, longitude: coords.longitude, latitude: coords.latitude, zoom: 12 }));
+        setLocationStatus("idle");
+      },
+      () => setLocationStatus("error"),
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   if (!mapboxToken) {
     return (
-      <div className="flex h-full min-h-[520px] items-center justify-center bg-zinc-950 p-6 text-white">
-        <div className="max-w-md rounded-3xl border border-orange-400/20 bg-black/70 p-6 text-center shadow-2xl">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">
-            Map configuration needed
-          </p>
-          <h2 className="mt-3 text-2xl font-black">Add your Mapbox token</h2>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Set NEXT_PUBLIC_MAPBOX_TOKEN locally and in your deployment environment to display the geographic event map.
-          </p>
+      <div className="flex h-full items-center justify-center bg-zinc-950 p-6">
+        <div className="max-w-md rounded-3xl border border-orange-400/20 bg-black/80 p-6 text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-300">Map unavailable</p>
+          <h2 className="mt-3 text-2xl font-black">Map configuration is incomplete</h2>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Add NEXT_PUBLIC_MAPBOX_TOKEN to the deployment environment to display event locations.</p>
+          <Link href="/events" className="mt-5 inline-flex rounded-full bg-white px-5 py-3 text-sm font-black text-black">Browse event list</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-full min-h-[520px] overflow-hidden bg-zinc-950">
-      <Map
-        {...viewState}
-        onMove={(event) => setViewState(event.viewState)}
-        mapboxAccessToken={mapboxToken}
-        mapStyle="mapbox://styles/mapbox/dark-v11"
-        attributionControl={false}
-        reuseMaps
-      >
+    <div className="relative h-full overflow-hidden bg-zinc-950">
+      <Map {...viewState} onMove={(event) => setViewState(event.viewState)} onClick={() => setSelectedId(null)}
+        mapboxAccessToken={mapboxToken} mapStyle="mapbox://styles/mapbox/dark-v11" attributionControl={false} reuseMaps>
         <NavigationControl position="bottom-right" showCompass={false} />
-
         {mappedEvents.map((event) => {
-          const active = event._id === selectedId;
+          const active = selectedId === event._id;
           return (
-            <Marker
-              key={event._id}
-              longitude={Number(event.longitude)}
-              latitude={Number(event.latitude)}
-              anchor="bottom"
-            >
-              <button
-                type="button"
-                aria-label={`View ${event.name || "event"}`}
-                onClick={(clickEvent) => {
-                  clickEvent.stopPropagation();
-                  setSelectedId(event._id);
-                }}
-                className={`group relative grid h-10 w-10 place-items-center rounded-full border-2 border-black shadow-[0_0_24px_rgba(249,115,22,0.7)] transition hover:scale-110 ${
-                  active ? "bg-violet-400" : "bg-orange-400"
-                }`}
-              >
-                <span className="h-3 w-3 rounded-full bg-black" />
-                <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-orange-400/30" />
+            <Marker key={event._id} longitude={Number(event.longitude)} latitude={Number(event.latitude)} anchor="bottom">
+              <button type="button" aria-label={`Show ${event.name || "event"}`}
+                onClick={(clickEvent) => { clickEvent.stopPropagation(); focusEvent(event); }}
+                className={`group relative grid h-11 w-11 place-items-center rounded-full border-2 border-black shadow-[0_0_24px_rgba(249,115,22,.65)] transition hover:scale-110 ${active ? "bg-violet-500" : "bg-orange-500"}`}>
+                <MapPin className="h-5 w-5 text-white" aria-hidden="true" />
+                {!active && <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-orange-400/25" />}
               </button>
             </Marker>
           );
         })}
 
         {selectedEvent && (
-          <Popup
-            longitude={Number(selectedEvent.longitude)}
-            latitude={Number(selectedEvent.latitude)}
-            anchor="top"
-            offset={14}
-            closeOnClick={false}
-            onClose={() => setSelectedId(null)}
-            maxWidth="320px"
-          >
-            <div className="overflow-hidden rounded-2xl bg-zinc-950 text-white">
-              {selectedEvent.imageUrl && (
-                <img
-                  src={selectedEvent.imageUrl}
-                  alt=""
-                  className="h-32 w-full object-cover"
-                />
-              )}
+          <Popup longitude={Number(selectedEvent.longitude)} latitude={Number(selectedEvent.latitude)}
+            anchor="top" offset={14} closeOnClick={false} onClose={() => setSelectedId(null)} maxWidth="320px">
+            <article className="overflow-hidden rounded-2xl bg-zinc-950 text-white">
+              {selectedEvent.imageUrl && <img src={selectedEvent.imageUrl} alt="" className="h-32 w-full object-cover" />}
               <div className="p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300">
-                  {formatDate(selectedEvent)}
-                </p>
-                <h3 className="mt-2 line-clamp-2 text-lg font-black">
-                  {selectedEvent.name || "Untitled event"}
-                </h3>
-                <p className="mt-2 line-clamp-1 text-sm text-zinc-400">
-                  {locationLabel(selectedEvent)}
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-300">{formatDate(selectedEvent)}</p>
+                <h2 className="mt-2 line-clamp-2 text-lg font-black">{selectedEvent.name || "Untitled event"}</h2>
+                <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{locationLabel(selectedEvent)}</p>
                 <div className="mt-4 flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-white">
-                    {Number(selectedEvent.price ?? 0) > 0
-                      ? `From $${Number(selectedEvent.price).toFixed(0)}`
-                      : "Free"}
-                  </span>
-                  <Link
-                    href={`/events/${selectedEvent._id}`}
-                    className="rounded-full bg-white px-4 py-2 text-xs font-black text-black"
-                  >
-                    View event
-                  </Link>
+                  <span className="text-sm font-bold">{Number(selectedEvent.price ?? 0) > 0 ? `From $${Number(selectedEvent.price).toFixed(0)}` : "Free"}</span>
+                  <Link href={`/events/${selectedEvent._id}`} className="rounded-full bg-white px-4 py-2 text-xs font-black text-black">View event</Link>
                 </div>
               </div>
-            </div>
+            </article>
           </Popup>
         )}
       </Map>
 
-      <div className="absolute left-4 right-4 top-4 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/75 p-3 shadow-2xl backdrop-blur-xl md:left-6 md:right-auto md:min-w-[420px]">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
-            Geographic discovery
-          </p>
-          <p className="mt-1 text-sm font-bold text-white">
-            {mappedEvents.length} mapped event{mappedEvents.length === 1 ? "" : "s"}
-          </p>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto">
-          {([
-            ["all", "All"],
-            ["tonight", "Tonight"],
-            ["weekend", "This Weekend"],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTimeMode(key)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-black transition ${
-                timeMode === key
-                  ? "bg-white text-black"
-                  : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <button type="button" onClick={useMyLocation}
+        className="absolute bottom-40 right-3 z-10 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-black/85 px-4 text-xs font-black text-white shadow-xl backdrop-blur-xl hover:bg-zinc-900 sm:bottom-20 sm:right-5">
+        <LocateFixed className={`h-4 w-4 ${locationStatus === "loading" ? "animate-pulse text-orange-300" : ""}`} aria-hidden="true" />
+        {locationStatus === "loading" ? "Locating…" : locationStatus === "error" ? "Location blocked" : "Near me"}
+      </button>
 
       {mappedEvents.length === 0 && (
-        <div className="pointer-events-none absolute inset-x-4 bottom-5 z-10 rounded-2xl border border-white/10 bg-black/80 p-4 text-center text-sm text-zinc-300 backdrop-blur md:left-6 md:right-auto md:max-w-md">
-          No events with valid coordinates match this filter. Add latitude and longitude to event venues to place them on the map.
+        <div className="absolute inset-x-3 bottom-36 z-10 rounded-2xl border border-white/10 bg-black/85 p-4 text-center text-sm text-zinc-300 backdrop-blur-xl sm:bottom-5 sm:left-auto sm:right-5 sm:max-w-sm">
+          No mapped events match these filters. Try another category, date, or location.
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 z-10 flex gap-3 overflow-x-auto border-t border-white/10 bg-black/80 p-4 backdrop-blur-xl md:hidden">
-        {filteredEvents.slice(0, 8).map((event) => (
-          <Link
-            key={event._id}
-            href={`/events/${event._id}`}
-            className="min-w-[250px] rounded-2xl border border-white/10 bg-zinc-950 p-4"
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300">
-              {formatDate(event)}
-            </p>
-            <p className="mt-2 line-clamp-1 font-black text-white">
-              {event.name || "Untitled event"}
-            </p>
-            <p className="mt-1 line-clamp-1 text-xs text-zinc-400">
-              {locationLabel(event)}
-            </p>
-          </Link>
-        ))}
-      </div>
+      {mappedEvents.length > 0 && (
+        <div className="absolute inset-x-0 bottom-0 z-10 flex gap-3 overflow-x-auto border-t border-white/10 bg-black/80 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:hidden">
+          {mappedEvents.slice(0, 10).map((event) => (
+            <button key={event._id} type="button" onClick={() => focusEvent(event)}
+              className={`min-w-[235px] rounded-2xl border p-3 text-left ${selectedId === event._id ? "border-orange-400 bg-orange-500/15" : "border-white/10 bg-zinc-950"}`}>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-300">{formatDate(event)}</p>
+              <p className="mt-1 line-clamp-1 font-black text-white">{event.name || "Untitled event"}</p>
+              <p className="mt-1 line-clamp-1 text-xs text-zinc-400">{locationLabel(event)}</p>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
