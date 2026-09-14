@@ -780,7 +780,7 @@ export default function FlyerStudioV2Page() {
             }
             className="rounded-lg px-3 py-2 text-sm font-bold text-white/60 hover:bg-white/10 hover:text-white"
           >
-            â Back
+            ← Back
           </Link>
           <div className="min-w-0">
             <p className="text-sm font-black">Function Hour Studio</p>
@@ -811,7 +811,7 @@ export default function FlyerStudioV2Page() {
             disabled={!selectedEventId || isSaving}
             className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30 sm:px-4"
           >
-            {isSaving ? "Savingâ¦" : "Save draft"}
+            {isSaving ? "Saving…" : "Save draft"}
           </button>
           {saveStatus ? (
             <span className="shrink-0 text-xs font-bold text-white/40">
@@ -875,7 +875,7 @@ export default function FlyerStudioV2Page() {
           {activeTool === "uploads" && (
             <ToolPanel title="Uploads">
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-7 text-center hover:border-violet-400/50">
-                <span className="text-2xl">â</span>
+                <span className="text-2xl">↑</span>
                 <span className="mt-2 text-sm font-black">Upload media</span>
                 <span className="mt-1 text-xs text-white/40">
                   JPG, PNG or WebP

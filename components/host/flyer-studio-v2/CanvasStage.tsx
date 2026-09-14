@@ -91,7 +91,7 @@ export default function CanvasStage({
             onClick={() => onZoomChange(Math.max(40, zoom - 5))}
             className="rounded-lg border border-black/10 px-3 py-2 text-sm font-black"
           >
-            â
+            −
           </button>
           <span className="min-w-12 text-center text-xs font-black">
             {zoom}%
@@ -215,7 +215,7 @@ export default function CanvasStage({
                     <>
                       <div className="pointer-events-none absolute inset-0 border-2 border-violet-500" />
                       <div className="pointer-events-none absolute -top-7 left-0 rounded bg-violet-600 px-2 py-1 text-[10px] font-black text-white">
-                        {Math.round(element.width)} Ã {Math.round(element.height)}
+                        {Math.round(element.width)} × {Math.round(element.height)}
                       </div>
                       {!element.locked
                         ? resizeHandles.map((handle) => (

@@ -78,7 +78,7 @@ export default function HomePage() {
       <ExperienceHero search={search} setSearch={setSearch} category={category} setCategory={setCategory} city={city} setCity={setCity} view={view} setView={setView} totalEvents={displayedEvents.length} quickFilter={quickFilter} setQuickFilter={setQuickFilter} />
 
       {events === undefined ? (
-        <section className="mx-auto max-w-[1240px] px-5 py-20 text-center text-zinc-400">Loading eventsâ¦</section>
+        <section className="mx-auto max-w-[1240px] px-5 py-20 text-center text-zinc-400">Loading events…</section>
       ) : displayedEvents.length > 0 ? (
         <>
           <TrendingCarousel city={city} events={displayedEvents.slice(0, 6)} savedEventIds={savedEventIds} onToggleSave={toggleSavedEvent} />
@@ -97,9 +97,9 @@ export default function HomePage() {
       <section className="border-y border-white/10 bg-white/[0.025] px-5 py-12 text-center">
         <h2 className="text-3xl font-black">Want the full discovery experience?</h2>
         <p className="mx-auto mt-3 max-w-xl text-zinc-400">Explore collections, hosts, the live map, and every Function Hour event.</p>
-        <Link href="/events" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet-500 to-orange-500 px-7 font-black">Open all events â</Link>
+        <Link href="/events" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet-500 to-orange-500 px-7 font-black">Open all events →</Link>
       </section>
-      <footer className="px-6 py-10 text-center text-sm text-zinc-500"><p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p><p className="mt-4">Â© 2026 Function Hour. All rights reserved.</p></footer>
+      <footer className="px-6 py-10 text-center text-sm text-zinc-500"><p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p><p className="mt-4">© 2026 Function Hour. All rights reserved.</p></footer>
     </main>
   );
 }

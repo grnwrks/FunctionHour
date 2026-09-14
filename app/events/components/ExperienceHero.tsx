@@ -1,6 +1,18 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import {
+  Church,
+  Handshake,
+  LayoutGrid,
+  Music2,
+  PartyPopper,
+  Presentation,
+  Sparkles,
+  Trophy,
+  Users,
+  Utensils,
+} from "lucide-react";
 
 type EventsView = "all" | "mine";
 export type QuickFilter = "" | "tonight" | "weekend";
@@ -20,16 +32,16 @@ type ExperienceHeroProps = {
 };
 
 const categories = [
-  { label: "All", icon: "â¦" },
-  { label: "Concert", icon: "â«" },
-  { label: "Reunion", icon: "â¤" },
-  { label: "Conference", icon: "â" },
-  { label: "Party", icon: "â¦" },
-  { label: "Religious", icon: "â" },
-  { label: "Festival", icon: "â" },
-  { label: "Food", icon: "â¨" },
-  { label: "Networking", icon: "â" },
-  { label: "Sports", icon: "â" },
+  { label: "All", icon: LayoutGrid },
+  { label: "Concert", icon: Music2 },
+  { label: "Reunion", icon: Users },
+  { label: "Conference", icon: Presentation },
+  { label: "Party", icon: PartyPopper },
+  { label: "Religious", icon: Church },
+  { label: "Festival", icon: Sparkles },
+  { label: "Food", icon: Utensils },
+  { label: "Networking", icon: Handshake },
+  { label: "Sports", icon: Trophy },
 ];
 
 const cities = [
@@ -45,7 +57,7 @@ const cities = [
 const universeNodes = [
   {
     label: "Music",
-    icon: "âª",
+    icon: "♪",
     position: "left-[16%] top-[3%]",
     size: "h-[92px] w-[92px]",
     background:
@@ -53,7 +65,7 @@ const universeNodes = [
   },
   {
     label: "Nightlife",
-    icon: "â½",
+    icon: "▽",
     position: "right-[9%] top-[7%]",
     size: "h-[98px] w-[98px]",
     background:
@@ -61,7 +73,7 @@ const universeNodes = [
   },
   {
     label: "Festivals",
-    icon: "âº",
+    icon: "✺",
     position: "left-[6%] top-[41%]",
     size: "h-[96px] w-[96px]",
     background:
@@ -69,7 +81,7 @@ const universeNodes = [
   },
   {
     label: "Arts",
-    icon: "â",
+    icon: "◉",
     position: "right-[22%] top-[48%]",
     size: "h-[94px] w-[94px]",
     background:
@@ -77,7 +89,7 @@ const universeNodes = [
   },
   {
     label: "Food",
-    icon: "Î¨",
+    icon: "Ψ",
     position: "left-[28%] bottom-[3%]",
     size: "h-[94px] w-[94px]",
     background:
@@ -85,7 +97,7 @@ const universeNodes = [
   },
   {
     label: "Networking",
-    icon: "â",
+    icon: "◇",
     position: "right-[3%] bottom-[3%]",
     size: "h-[100px] w-[100px]",
     background:
@@ -154,7 +166,7 @@ export default function ExperienceHero({
         <div className="grid gap-9 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-3 rounded-full border border-violet-400/35 bg-violet-500/10 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.26em] text-violet-200 shadow-[0_0_28px_rgba(139,92,246,0.15)]">
-              <span className="text-violet-300">â¦</span>
+              <span className="text-violet-300">✦</span>
               Discover experiences
             </div>
 
@@ -173,7 +185,7 @@ export default function ExperienceHero({
             <div className="mt-7 max-w-[620px]">
   <div className="flex h-[68px] items-center rounded-[1.5rem] border border-violet-400/40 bg-black/75 p-2 shadow-[0_0_40px_rgba(139,92,246,0.22)] backdrop-blur-xl transition focus-within:border-violet-300">
     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-lg text-violet-200">
-      ð
+      🔍
     </div>
 
     <input
@@ -271,7 +283,7 @@ export default function ExperienceHero({
 
             <div className="absolute left-1/2 top-1/2 z-20 flex h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-[9px] border-black bg-[radial-gradient(circle_at_35%_28%,rgba(184,99,255,0.9),rgba(70,28,77,0.98)_48%,rgba(25,14,14,1)_76%)] text-center shadow-[0_0_75px_rgba(168,85,247,0.35)]">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-rose-400 text-xl">
-                â¦
+                ✦
               </div>
 
               <span className="text-[9px] font-black uppercase tracking-[0.34em] text-zinc-300">
@@ -302,7 +314,7 @@ export default function ExperienceHero({
             ))}
 
             <div className="absolute bottom-[4%] right-[16%] z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/90 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-xl">
-              <span className="text-orange-400">â</span>
+              <span className="text-orange-400">⌖</span>
               Live around you
               <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-violet-200">
                 {totalEvents}
@@ -315,6 +327,7 @@ export default function ExperienceHero({
           <div className="grid grid-cols-5 gap-1 p-2 sm:grid-cols-10">
             {categories.map((item) => {
               const isActive = category === item.label;
+              const Icon = item.icon;
 
               return (
                 <button
@@ -327,7 +340,7 @@ export default function ExperienceHero({
                       : "text-zinc-300 hover:bg-white/[0.06] hover:text-white"
                   }`}
                 >
-                  <span className="text-[19px]">{item.icon}</span>
+                  <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={2} />
                   <span className="mt-2 text-[11px] font-black">
                     {item.label}
                   </span>

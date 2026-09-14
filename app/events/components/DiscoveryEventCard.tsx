@@ -119,7 +119,7 @@ export default function DiscoveryEventCard({
               isSaved ? "scale-110" : ""
             }`}
           >
-            {isSaved ? "â¥" : "â¡"}
+            {isSaved ? "♥" : "♡"}
           </span>
         </button>
 
@@ -154,7 +154,7 @@ export default function DiscoveryEventCard({
               aria-hidden="true"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs"
             >
-              â
+              ◉
             </span>
 
             <span className="truncate">{location}</span>
@@ -166,7 +166,7 @@ export default function DiscoveryEventCard({
                 aria-hidden="true"
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs"
               >
-                â
+                ◌
               </span>
 
               <span className="truncate">Hosted by {organizerName}</span>
@@ -196,7 +196,7 @@ export default function DiscoveryEventCard({
             className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-black text-black transition duration-200 hover:scale-[1.03] hover:bg-violet-200 active:scale-95"
           >
             View event
-            <span aria-hidden="true">â</span>
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
