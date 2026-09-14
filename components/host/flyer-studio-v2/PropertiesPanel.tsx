@@ -20,7 +20,7 @@ export default function PropertiesPanel({
   deleteSelected: () => void;
 }) {
   return (
-    <aside className="overflow-y-auto border-l border-white/10 bg-[#1b1b1b] p-4">
+    <aside className="max-h-[55vh] overflow-y-auto border-t border-white/10 bg-[#1b1b1b] p-4 lg:max-h-none lg:border-l lg:border-t-0">
       <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">
         Properties
       </p>

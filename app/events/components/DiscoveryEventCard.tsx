@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import EventImage from "./EventImage";
+import { getEventTimestamp } from "../eventPresentation";
 
 type DiscoveryEventCardProps = {
   event: any;
@@ -39,6 +40,21 @@ function getEventPrice(event: any) {
   return `$${price.toLocaleString()}`;
 }
 
+function getEventSchedule(event: any) {
+  const timestamp = getEventTimestamp(event);
+  if (!Number.isFinite(timestamp)) {
+    return { date: event.dateString || event.formattedDate || "Date coming soon", time: "Time TBA" };
+  }
+  const date = new Intl.DateTimeFormat("en-US", {
+    weekday: "short", month: "short", day: "numeric", year: "numeric",
+  }).format(new Date(timestamp));
+  const hasTime = Boolean(event.eventDate) || /T\d{2}:\d{2}/.test(event.dateString || "");
+  const time = hasTime
+    ? new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(new Date(timestamp))
+    : "Time TBA";
+  return { date, time };
+}
+
 export default function DiscoveryEventCard({
   event,
   isSaved,
@@ -54,10 +70,7 @@ export default function DiscoveryEventCard({
     event.city ||
     "Location coming soon";
 
-  const dateLabel =
-    event.dateString ||
-    event.formattedDate ||
-    "Date coming soon";
+  const schedule = getEventSchedule(event);
 
   return (
     <article className="group relative overflow-hidden rounded-[1.65rem] border border-white/10 bg-[#0d0d11] shadow-[0_20px_60px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-1.5 hover:border-violet-400/40 hover:shadow-[0_28px_80px_rgba(76,29,149,0.22)]">
@@ -106,13 +119,14 @@ export default function DiscoveryEventCard({
               isSaved ? "scale-110" : ""
             }`}
           >
-            {isSaved ? "♥" : "♡"}
+            {isSaved ? "â¥" : "â¡"}
           </span>
         </button>
 
         <div className="pointer-events-none absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
-          <div className="rounded-full border border-white/15 bg-black/65 px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-white backdrop-blur-xl">
-            {dateLabel}
+          <div className="max-w-[72%] rounded-xl border border-white/20 bg-black/85 px-3 py-2 text-white shadow-lg backdrop-blur-xl">
+            <p className="truncate text-xs font-black leading-4">{schedule.date}</p>
+            <p className="mt-0.5 text-[11px] font-bold text-violet-200">{schedule.time}</p>
           </div>
 
           <div
@@ -140,7 +154,7 @@ export default function DiscoveryEventCard({
               aria-hidden="true"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs"
             >
-              ◉
+              â
             </span>
 
             <span className="truncate">{location}</span>
@@ -152,7 +166,7 @@ export default function DiscoveryEventCard({
                 aria-hidden="true"
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs"
               >
-                ◌
+                â
               </span>
 
               <span className="truncate">Hosted by {organizerName}</span>
@@ -182,7 +196,7 @@ export default function DiscoveryEventCard({
             className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-xs font-black text-black transition duration-200 hover:scale-[1.03] hover:bg-violet-200 active:scale-95"
           >
             View event
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true">â</span>
           </Link>
         </div>
       </div>

@@ -71,27 +71,27 @@ export default function CanvasStage({
   updateElement: UpdateElement;
 }) {
   return (
-    <section className="relative flex min-w-0 flex-col bg-[#ececef] text-black">
-      <div className="flex min-h-[56px] items-center justify-between border-b border-black/10 bg-white px-4">
-        <div className="flex items-center gap-2">
+    <section className="relative flex min-h-[70vh] min-w-0 flex-col bg-[#ececef] text-black lg:min-h-0">
+      <div className="flex min-h-[56px] flex-wrap items-center justify-between gap-2 border-b border-black/10 bg-white px-3 py-2 sm:px-4">
+        <div className="flex max-w-full items-center gap-2 overflow-x-auto">
           {formats.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => onFormatChange(item.id)}
-              className={`rounded-lg px-3 py-2 text-xs font-black ${format === item.id ? "bg-black text-white" : "bg-black/5 text-black/55"}`}
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-black ${format === item.id ? "bg-black text-white" : "bg-black/5 text-black/55"}`}
             >
               {item.label}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => onZoomChange(Math.max(40, zoom - 5))}
             className="rounded-lg border border-black/10 px-3 py-2 text-sm font-black"
           >
-            −
+            â
           </button>
           <span className="min-w-12 text-center text-xs font-black">
             {zoom}%
@@ -106,7 +106,7 @@ export default function CanvasStage({
         </div>
       </div>
 
-      <div className="flex flex-1 items-start justify-center overflow-auto p-12">
+      <div className="flex flex-1 items-start justify-center overflow-auto p-4 sm:p-8 lg:p-12">
         <div
           className="relative shrink-0"
           style={{
@@ -215,7 +215,7 @@ export default function CanvasStage({
                     <>
                       <div className="pointer-events-none absolute inset-0 border-2 border-violet-500" />
                       <div className="pointer-events-none absolute -top-7 left-0 rounded bg-violet-600 px-2 py-1 text-[10px] font-black text-white">
-                        {Math.round(element.width)} × {Math.round(element.height)}
+                        {Math.round(element.width)} Ã {Math.round(element.height)}
                       </div>
                       {!element.locked
                         ? resizeHandles.map((handle) => (

@@ -97,6 +97,10 @@ export default function FlyerStudioV2Page() {
   const eventTitle = selectedEvent?.name || headline;
 
   useEffect(() => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setZoom(55);
+    }
+
     const linkedEventId = new URLSearchParams(window.location.search).get(
       "eventId"
     );
@@ -766,8 +770,8 @@ export default function FlyerStudioV2Page() {
 
   return (
     <main className="min-h-screen bg-[#111111] text-white">
-      <header className="flex min-h-16 items-center justify-between border-b border-white/10 bg-[#181818] px-4">
-        <div className="flex items-center gap-4">
+      <header className="flex min-h-16 flex-col gap-3 border-b border-white/10 bg-[#181818] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link
             href={
               selectedEventId
@@ -776,20 +780,20 @@ export default function FlyerStudioV2Page() {
             }
             className="rounded-lg px-3 py-2 text-sm font-bold text-white/60 hover:bg-white/10 hover:text-white"
           >
-            ← Back
+            â Back
           </Link>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-black">Function Hour Studio</p>
-            <p className="text-xs text-white/35">Canva-style editor V2</p>
+            <p className="hidden text-xs text-white/35 sm:block">Canva-style editor V2</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:pb-0">
           <button
             type="button"
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30"
+            className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30 sm:px-4"
           >
             Undo
           </button>
@@ -797,7 +801,7 @@ export default function FlyerStudioV2Page() {
             type="button"
             onClick={redo}
             disabled={!canRedo}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30"
+            className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30 sm:px-4"
           >
             Redo
           </button>
@@ -805,34 +809,34 @@ export default function FlyerStudioV2Page() {
             type="button"
             onClick={() => void saveCurrentDraft()}
             disabled={!selectedEventId || isSaving}
-            className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30"
+            className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold hover:bg-white/10 disabled:opacity-30 sm:px-4"
           >
-            {isSaving ? "Saving…" : "Save draft"}
+            {isSaving ? "Savingâ¦" : "Save draft"}
           </button>
           {saveStatus ? (
-            <span className="text-xs font-bold text-white/40">
+            <span className="shrink-0 text-xs font-bold text-white/40">
               {saveStatus}
             </span>
           ) : null}
           <button
             type="button"
             onClick={downloadCanvas}
-            className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-black hover:bg-violet-500"
+            className="shrink-0 rounded-lg bg-violet-600 px-4 py-2 text-sm font-black hover:bg-violet-500 sm:px-5"
           >
             Download
           </button>
         </div>
       </header>
 
-      <div className="grid min-h-[calc(100vh-64px)] grid-cols-[76px_300px_minmax(0,1fr)_290px]">
-        <aside className="border-r border-white/10 bg-[#171717] py-3">
-          <div className="space-y-2 px-2">
+      <div className="grid min-h-[calc(100vh-64px)] grid-cols-1 lg:grid-cols-[76px_300px_minmax(0,1fr)_290px]">
+        <aside className="border-b border-white/10 bg-[#171717] py-2 lg:border-b-0 lg:border-r lg:py-3">
+          <div className="flex gap-2 overflow-x-auto px-2 lg:block lg:space-y-2">
             {sidebarTools.map((tool) => (
               <button
                 key={tool.id}
                 type="button"
                 onClick={() => setActiveTool(tool.id)}
-                className={`flex w-full flex-col items-center gap-1 rounded-xl px-1 py-3 text-[10px] font-bold transition ${
+                className={`flex min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-xl px-1 py-3 text-[10px] font-bold transition lg:w-full lg:min-w-0 ${
                   activeTool === tool.id
                     ? "bg-violet-600 text-white"
                     : "text-white/50 hover:bg-white/10 hover:text-white"
@@ -845,7 +849,7 @@ export default function FlyerStudioV2Page() {
           </div>
         </aside>
 
-        <aside className="overflow-y-auto border-r border-white/10 bg-[#202020] p-4">
+        <aside className="max-h-[42vh] overflow-y-auto border-b border-white/10 bg-[#202020] p-4 lg:max-h-none lg:border-b-0 lg:border-r">
           {activeTool === "templates" && (
             <ToolPanel title="Templates">
               <div className="grid grid-cols-2 gap-3">
@@ -871,7 +875,7 @@ export default function FlyerStudioV2Page() {
           {activeTool === "uploads" && (
             <ToolPanel title="Uploads">
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 p-7 text-center hover:border-violet-400/50">
-                <span className="text-2xl">↑</span>
+                <span className="text-2xl">â</span>
                 <span className="mt-2 text-sm font-black">Upload media</span>
                 <span className="mt-1 text-xs text-white/40">
                   JPG, PNG or WebP

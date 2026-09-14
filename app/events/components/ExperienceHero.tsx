@@ -3,6 +3,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
 type EventsView = "all" | "mine";
+export type QuickFilter = "" | "tonight" | "weekend";
 
 type ExperienceHeroProps = {
   search: string;
@@ -14,19 +15,21 @@ type ExperienceHeroProps = {
   view: EventsView;
   setView: Dispatch<SetStateAction<EventsView>>;
   totalEvents: number;
+  quickFilter: QuickFilter;
+  setQuickFilter: Dispatch<SetStateAction<QuickFilter>>;
 };
 
 const categories = [
-  { label: "All", icon: "▦" },
-  { label: "Concert", icon: "♫" },
-  { label: "Reunion", icon: "▤" },
-  { label: "Conference", icon: "♙" },
-  { label: "Party", icon: "✦" },
-  { label: "Religious", icon: "♟" },
-  { label: "Festival", icon: "★" },
-  { label: "Food", icon: "♨" },
-  { label: "Networking", icon: "◇" },
-  { label: "Sports", icon: "◉" },
+  { label: "All", icon: "â¦" },
+  { label: "Concert", icon: "â«" },
+  { label: "Reunion", icon: "â¤" },
+  { label: "Conference", icon: "â" },
+  { label: "Party", icon: "â¦" },
+  { label: "Religious", icon: "â" },
+  { label: "Festival", icon: "â" },
+  { label: "Food", icon: "â¨" },
+  { label: "Networking", icon: "â" },
+  { label: "Sports", icon: "â" },
 ];
 
 const cities = [
@@ -42,7 +45,7 @@ const cities = [
 const universeNodes = [
   {
     label: "Music",
-    icon: "♪",
+    icon: "âª",
     position: "left-[16%] top-[3%]",
     size: "h-[92px] w-[92px]",
     background:
@@ -50,7 +53,7 @@ const universeNodes = [
   },
   {
     label: "Nightlife",
-    icon: "▽",
+    icon: "â½",
     position: "right-[9%] top-[7%]",
     size: "h-[98px] w-[98px]",
     background:
@@ -58,7 +61,7 @@ const universeNodes = [
   },
   {
     label: "Festivals",
-    icon: "✺",
+    icon: "âº",
     position: "left-[6%] top-[41%]",
     size: "h-[96px] w-[96px]",
     background:
@@ -66,7 +69,7 @@ const universeNodes = [
   },
   {
     label: "Arts",
-    icon: "◉",
+    icon: "â",
     position: "right-[22%] top-[48%]",
     size: "h-[94px] w-[94px]",
     background:
@@ -74,7 +77,7 @@ const universeNodes = [
   },
   {
     label: "Food",
-    icon: "Ψ",
+    icon: "Î¨",
     position: "left-[28%] bottom-[3%]",
     size: "h-[94px] w-[94px]",
     background:
@@ -82,7 +85,7 @@ const universeNodes = [
   },
   {
     label: "Networking",
-    icon: "◇",
+    icon: "â",
     position: "right-[3%] bottom-[3%]",
     size: "h-[100px] w-[100px]",
     background:
@@ -100,12 +103,43 @@ export default function ExperienceHero({
   view,
   setView,
   totalEvents,
+  quickFilter,
+  setQuickFilter,
 }: ExperienceHeroProps) {
   const resetFilters = () => {
     setSearch("");
     setCategory("All");
     setCity("All Cities");
     setView("all");
+    setQuickFilter("");
+  };
+
+  const activateQuickFilter = (chip: string) => {
+    if (chip === "Near Me") {
+      window.location.assign("/map");
+      return;
+    }
+    setView("all");
+    if (chip === "Tonight") {
+      setSearch("");
+      setCategory("All");
+      setQuickFilter(quickFilter === "tonight" ? "" : "tonight");
+      return;
+    }
+    if (chip === "This Weekend") {
+      setSearch("");
+      setCategory("All");
+      setQuickFilter(quickFilter === "weekend" ? "" : "weekend");
+      return;
+    }
+    setQuickFilter("");
+    if (chip === "Food" || chip === "Sports" || chip === "Networking") {
+      setCategory(chip);
+      setSearch("");
+    } else {
+      setCategory("All");
+      setSearch(chip);
+    }
   };
 
   return (
@@ -120,7 +154,7 @@ export default function ExperienceHero({
         <div className="grid gap-9 lg:grid-cols-[0.88fr_1.12fr] lg:items-center">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-3 rounded-full border border-violet-400/35 bg-violet-500/10 px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.26em] text-violet-200 shadow-[0_0_28px_rgba(139,92,246,0.15)]">
-              <span className="text-violet-300">✦</span>
+              <span className="text-violet-300">â¦</span>
               Discover experiences
             </div>
 
@@ -139,7 +173,7 @@ export default function ExperienceHero({
             <div className="mt-7 max-w-[620px]">
   <div className="flex h-[68px] items-center rounded-[1.5rem] border border-violet-400/40 bg-black/75 p-2 shadow-[0_0_40px_rgba(139,92,246,0.22)] backdrop-blur-xl transition focus-within:border-violet-300">
     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-lg text-violet-200">
-      🔍
+      ð
     </div>
 
     <input
@@ -160,6 +194,7 @@ export default function ExperienceHero({
     ) : (
       <button
         type="button"
+        onClick={() => document.getElementById("event-filters")?.scrollIntoView({ behavior: "smooth", block: "center" })}
         className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-300"
       >
         Filters
@@ -181,7 +216,13 @@ export default function ExperienceHero({
       <button
         key={chip}
         type="button"
-        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:border-violet-400 hover:bg-violet-500/10 hover:text-white"
+        onClick={() => activateQuickFilter(chip)}
+        aria-pressed={(chip === "Tonight" && quickFilter === "tonight") || (chip === "This Weekend" && quickFilter === "weekend")}
+        className={`rounded-full border px-4 py-2 text-sm font-medium transition hover:border-violet-400 hover:text-white ${
+          (chip === "Tonight" && quickFilter === "tonight") || (chip === "This Weekend" && quickFilter === "weekend")
+            ? "border-violet-400 bg-violet-500/25 text-white"
+            : "border-white/10 bg-white/5 text-zinc-300 hover:bg-violet-500/10"
+        }`}
       >
         {chip}
       </button>
@@ -203,6 +244,12 @@ export default function ExperienceHero({
       <button
         key={term}
         type="button"
+        onClick={() => {
+          setSearch(term);
+          setCategory("All");
+          setQuickFilter("");
+          document.getElementById("event-results")?.scrollIntoView({ behavior: "smooth" });
+        }}
         className="rounded-full bg-white/5 px-3 py-1.5 text-zinc-400 transition hover:bg-white/10 hover:text-white"
       >
         {term}
@@ -224,7 +271,7 @@ export default function ExperienceHero({
 
             <div className="absolute left-1/2 top-1/2 z-20 flex h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border-[9px] border-black bg-[radial-gradient(circle_at_35%_28%,rgba(184,99,255,0.9),rgba(70,28,77,0.98)_48%,rgba(25,14,14,1)_76%)] text-center shadow-[0_0_75px_rgba(168,85,247,0.35)]">
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-rose-400 text-xl">
-                ✦
+                â¦
               </div>
 
               <span className="text-[9px] font-black uppercase tracking-[0.34em] text-zinc-300">
@@ -255,7 +302,7 @@ export default function ExperienceHero({
             ))}
 
             <div className="absolute bottom-[4%] right-[16%] z-20 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/90 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-xl">
-              <span className="text-orange-400">⌖</span>
+              <span className="text-orange-400">â</span>
               Live around you
               <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-violet-200">
                 {totalEvents}
@@ -264,7 +311,7 @@ export default function ExperienceHero({
           </div>
         </div>
 
-        <div className="mt-8 overflow-hidden rounded-[1.65rem] border border-white/15 bg-white/[0.045] shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+        <div id="event-filters" className="mt-8 scroll-mt-28 overflow-hidden rounded-[1.65rem] border border-white/15 bg-white/[0.045] shadow-[0_20px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
           <div className="grid grid-cols-5 gap-1 p-2 sm:grid-cols-10">
             {categories.map((item) => {
               const isActive = category === item.label;
@@ -311,13 +358,6 @@ export default function ExperienceHero({
 
             <button
               type="button"
-              className="rounded-full border border-white/15 bg-white/[0.025] px-5 py-2.5 text-xs font-black text-zinc-300 transition hover:border-white/30 hover:text-white"
-            >
-              More⌄
-            </button>
-
-            <button
-              type="button"
               onClick={() => setView(view === "mine" ? "all" : "mine")}
               className={`rounded-full border px-5 py-2.5 text-xs font-black transition ${
                 view === "mine"
@@ -331,7 +371,8 @@ export default function ExperienceHero({
             {(search ||
               category !== "All" ||
               city !== "All Cities" ||
-              view !== "all") && (
+              view !== "all" ||
+              quickFilter) && (
               <button
                 type="button"
                 onClick={resetFilters}

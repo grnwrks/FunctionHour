@@ -12,7 +12,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import OrganizerPortalLink from "@/components/OrganizerPortalLink";
-import ExperienceHero from "./components/ExperienceHero";
+import ExperienceHero, { type QuickFilter } from "./components/ExperienceHero";
 import TrendingCarousel from "./components/TrendingCarousel";
 import DiscoveryCollections from "./components/DiscoveryCollections";
 import LiveMapSection from "./components/LiveMapSection";
@@ -20,6 +20,8 @@ import FeaturedHosts from "./components/FeaturedHosts";
 import EventGrid from "./components/EventGrid";
 import {
   discoveryScore,
+  isThisWeekend,
+  isTonight,
   matchesCollection,
   type DiscoveryEvent,
 } from "./eventPresentation";
@@ -69,6 +71,7 @@ export default function EventsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [city, setCity] = useState("All Cities");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("");
 
   const events = useQuery(api.events.getAll, {});
   const myEvents = useQuery(api.events.getMyEvents);
@@ -96,13 +99,14 @@ export default function EventsPage() {
       .filter((event) => eventMatchesCategory(event, category))
       .filter((event) => eventMatchesCity(event, city))
       .filter((event) => eventMatchesSearch(event, search))
+      .filter((event) => quickFilter === "tonight" ? isTonight(event) : quickFilter === "weekend" ? isThisWeekend(event) : true)
       .filter((event) => matchesCollection(event, activeCollection))
       .sort((a, b) => {
         const scoreDifference = discoveryScore(b) - discoveryScore(a);
         if (scoreDifference !== 0) return scoreDifference;
         return (b.createdAt ?? 0) - (a.createdAt ?? 0);
       });
-  }, [activeCollection, category, city, events, myEvents, search, view]);
+  }, [activeCollection, category, city, events, myEvents, quickFilter, search, view]);
 
   const trendingEvents = useMemo(
     () => displayedEvents.slice(0, Math.min(6, displayedEvents.length)),
@@ -200,6 +204,8 @@ export default function EventsPage() {
         view={view}
         setView={setView}
         totalEvents={displayedEvents.length}
+        quickFilter={quickFilter}
+        setQuickFilter={setQuickFilter}
       />
 
       {trendingEvents.length > 0 && (
@@ -234,6 +240,7 @@ export default function EventsPage() {
                 setCity("All Cities");
                 setActiveCollection("all");
                 setView("all");
+                setQuickFilter("");
               }}
               className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-black text-black"
             >
@@ -245,7 +252,7 @@ export default function EventsPage() {
 
       <footer className="border-t border-zinc-900 px-6 py-10 text-center text-sm text-zinc-500">
         <p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p>
-        <p className="mt-4">© 2026 Function Hour. All rights reserved.</p>
+        <p className="mt-4">Â© 2026 Function Hour. All rights reserved.</p>
       </footer>
     </main>
   );

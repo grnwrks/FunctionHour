@@ -7,10 +7,10 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import OrganizerPortalLink from "@/components/OrganizerPortalLink";
-import ExperienceHero from "./events/components/ExperienceHero";
+import ExperienceHero, { type QuickFilter } from "./events/components/ExperienceHero";
 import EventGrid from "./events/components/EventGrid";
 import TrendingCarousel from "./events/components/TrendingCarousel";
-import { discoveryScore, type DiscoveryEvent } from "./events/eventPresentation";
+import { discoveryScore, isThisWeekend, isTonight, type DiscoveryEvent } from "./events/eventPresentation";
 
 function matches(event: DiscoveryEvent, search: string, category: string, city: string) {
   const searchable = [event.name, event.description, event.category, event.location, event.venueName, event.venueAddress, event.city, event.state, event.dateString]
@@ -25,6 +25,7 @@ export default function HomePage() {
   const [category, setCategory] = useState("All");
   const [city, setCity] = useState("All Cities");
   const [view, setView] = useState<"all" | "mine">("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("");
   const events = useQuery(api.events.getAll, {});
   const myEvents = useQuery(api.events.getMyEvents);
   const savedEventIds = useQuery(api.savedEvents.getSavedEventIds) || [];
@@ -33,8 +34,9 @@ export default function HomePage() {
   const displayedEvents = useMemo(() => {
     const source = (view === "mine" ? myEvents ?? [] : events ?? []) as DiscoveryEvent[];
     return source.filter((event) => matches(event, search, category, city))
+      .filter((event) => quickFilter === "tonight" ? isTonight(event) : quickFilter === "weekend" ? isThisWeekend(event) : true)
       .sort((a, b) => discoveryScore(b) - discoveryScore(a));
-  }, [category, city, events, myEvents, search, view]);
+  }, [category, city, events, myEvents, quickFilter, search, view]);
 
   async function toggleSavedEvent(eventId: Id<"events">) {
     try { await toggleSaved({ eventId }); }
@@ -73,10 +75,10 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <ExperienceHero search={search} setSearch={setSearch} category={category} setCategory={setCategory} city={city} setCity={setCity} view={view} setView={setView} totalEvents={displayedEvents.length} />
+      <ExperienceHero search={search} setSearch={setSearch} category={category} setCategory={setCategory} city={city} setCity={setCity} view={view} setView={setView} totalEvents={displayedEvents.length} quickFilter={quickFilter} setQuickFilter={setQuickFilter} />
 
       {events === undefined ? (
-        <section className="mx-auto max-w-[1240px] px-5 py-20 text-center text-zinc-400">Loading events…</section>
+        <section className="mx-auto max-w-[1240px] px-5 py-20 text-center text-zinc-400">Loading eventsâ¦</section>
       ) : displayedEvents.length > 0 ? (
         <>
           <TrendingCarousel city={city} events={displayedEvents.slice(0, 6)} savedEventIds={savedEventIds} onToggleSave={toggleSavedEvent} />
@@ -87,7 +89,7 @@ export default function HomePage() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-10 text-center">
             <p className="text-sm font-black uppercase tracking-[0.24em] text-orange-300">No matches</p>
             <h2 className="mt-3 text-3xl font-black">Try another search, category, or city.</h2>
-            <button type="button" onClick={() => { setSearch(""); setCategory("All"); setCity("All Cities"); setView("all"); }} className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-black text-black">Reset discovery</button>
+            <button type="button" onClick={() => { setSearch(""); setCategory("All"); setCity("All Cities"); setView("all"); setQuickFilter(""); }} className="mt-6 rounded-full bg-white px-6 py-3 text-sm font-black text-black">Reset discovery</button>
           </div>
         </section>
       )}
@@ -95,9 +97,9 @@ export default function HomePage() {
       <section className="border-y border-white/10 bg-white/[0.025] px-5 py-12 text-center">
         <h2 className="text-3xl font-black">Want the full discovery experience?</h2>
         <p className="mx-auto mt-3 max-w-xl text-zinc-400">Explore collections, hosts, the live map, and every Function Hour event.</p>
-        <Link href="/events" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet-500 to-orange-500 px-7 font-black">Open all events →</Link>
+        <Link href="/events" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet-500 to-orange-500 px-7 font-black">Open all events â</Link>
       </section>
-      <footer className="px-6 py-10 text-center text-sm text-zinc-500"><p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p><p className="mt-4">© 2026 Function Hour. All rights reserved.</p></footer>
+      <footer className="px-6 py-10 text-center text-sm text-zinc-500"><p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p><p className="mt-4">Â© 2026 Function Hour. All rights reserved.</p></footer>
     </main>
   );
 }
