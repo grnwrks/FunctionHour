@@ -10,6 +10,7 @@ import {
 } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import OrganizerPortalLink from "@/components/OrganizerPortalLink";
 import ExperienceHero from "./components/ExperienceHero";
 import TrendingCarousel from "./components/TrendingCarousel";
@@ -118,9 +119,9 @@ export default function EventsPage() {
     return withoutTrending.length > 0 ? withoutTrending : displayedEvents;
   }, [displayedEvents, trendingIds]);
 
-  async function toggleSavedEvent(eventId: string) {
+  async function toggleSavedEvent(eventId: Id<"events">) {
     try {
-      await toggleSaved({ eventId: eventId as any });
+      await toggleSaved({ eventId });
     } catch (error) {
       console.error("Failed to toggle saved event:", error);
     }
@@ -138,7 +139,7 @@ export default function EventsPage() {
     <main className="safe-x min-h-screen overflow-x-hidden bg-black text-white">
       <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-black/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link href="/events" className="shrink-0 text-2xl font-extrabold tracking-[0.02em]">
+          <Link href="/" className="shrink-0 text-2xl font-extrabold tracking-[0.02em]" aria-label="Function Hour home">
             <span className="text-white">FUNCTION</span>
             <span className="text-violet-500">HOUR</span>
           </Link>
@@ -216,9 +217,9 @@ export default function EventsPage() {
 
       {displayedEvents.length > 0 ? (
         <EventGrid
-          events={gridEvents as any}
+          events={gridEvents}
           savedEventIds={savedEventIds}
-          onToggleSave={toggleSavedEvent as any}
+          onToggleSave={toggleSavedEvent}
         />
       ) : (
         <section className="mx-auto max-w-[1240px] px-5 pb-20 sm:px-7 lg:px-8">

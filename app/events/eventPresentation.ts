@@ -1,5 +1,7 @@
+import type { Id } from "@/convex/_generated/dataModel";
+
 export type DiscoveryEvent = {
-  _id: string;
+  _id: Id<"events">;
   name?: string;
   description?: string;
   category?: string;
@@ -20,6 +22,8 @@ export type DiscoveryEvent = {
   createdAt?: number;
   organizerId?: string;
   userId?: string;
+  imageStorageId?: Id<"_storage">;
+  isFeatured?: boolean;
 };
 
 export function getEventTimestamp(event: DiscoveryEvent) {

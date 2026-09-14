@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import ConvexClientProvider from "./ConvexClientProvider";
 import SyncUserWithConvex from "@/components/SyncUserWithConvex";
+import BackToHome from "@/components/navigation/BackToHome";
+import ThemeToggle from "@/components/navigation/ThemeToggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -39,13 +41,22 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
-      <html lang="en">
+      <html lang="en" className="dark" suppressHydrationWarning>
+        <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `(function(){try{var t=localStorage.getItem('function-hour-theme');if(t!=='light'&&t!=='dark')t='dark';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t}catch(e){}})();`,
+            }}
+          />
+        </head>
         <body>
           <a className="skip-link" href="#main-content">
             Skip to main content
           </a>
           <ConvexClientProvider>
             <SyncUserWithConvex />
+            <BackToHome />
+            <ThemeToggle />
             <div id="main-content" tabIndex={-1}>
               {children}
             </div>

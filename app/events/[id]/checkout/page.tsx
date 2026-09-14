@@ -2,7 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -16,6 +16,7 @@ export default function EventCheckoutPage({
   const { id } = use(params);
   const eventId = id as Id<"events">;
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const { user, isLoaded, isSignedIn } = useUser();
 
@@ -31,6 +32,7 @@ export default function EventCheckoutPage({
   const createTicket = useMutation(api.tickets.createTicket);
 
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState("");
+  const [quantity, setQuantity] = useState(1);
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState("");
@@ -54,11 +56,25 @@ export default function EventCheckoutPage({
     );
   }, [user]);
 
-  const activeTicketTypes =
-    ticketTypes?.filter((ticket) => ticket.isActive !== false) ?? [];
+  const activeTicketTypes = useMemo(
+    () => ticketTypes?.filter((ticket) => ticket.isActive !== false) ?? [],
+    [ticketTypes],
+  );
 
-  const activeAddOns =
-    addOns?.filter((addOn) => addOn.isActive !== false) ?? [];
+  const activeAddOns = useMemo(
+    () => addOns?.filter((addOn) => addOn.isActive !== false) ?? [],
+    [addOns],
+  );
+
+  useEffect(() => {
+    const requestedTicketType = searchParams.get("ticketType");
+    if (
+      requestedTicketType &&
+      activeTicketTypes.some((ticket) => ticket._id === requestedTicketType)
+    ) {
+      setSelectedTicketTypeId(requestedTicketType);
+    }
+  }, [activeTicketTypes, searchParams]);
 
   const selectedTicketType = useMemo(() => {
     return activeTicketTypes.find(
@@ -79,7 +95,18 @@ export default function EventCheckoutPage({
     0
   );
 
-  const total = Number(basePrice) + addOnTotal;
+  const total = Number(basePrice) * quantity + addOnTotal;
+
+  const selectedInventory = selectedTicketType?.quantity
+    ? Math.max(selectedTicketType.quantity - (selectedTicketType.sold ?? 0), 0)
+    : 10;
+  const maxQuantity = Number(basePrice) <= 0
+    ? 1
+    : Math.max(1, Math.min(10, selectedInventory));
+
+  useEffect(() => {
+    setQuantity((current) => Math.min(current, maxQuantity));
+  }, [maxQuantity]);
 
   const discount = useQuery(
     api.discountCodes.validate,
@@ -87,8 +114,8 @@ export default function EventCheckoutPage({
       ? {
           eventId,
           code: promoToValidate,
-          subtotal: Number(basePrice),
-          quantity: 1,
+          subtotal: Number(basePrice) * quantity,
+          quantity,
           ticketTypeId: selectedTicketType?._id,
         }
       : "skip"
@@ -153,7 +180,7 @@ export default function EventCheckoutPage({
           tickets: [
             {
               ticketTypeId: selectedTicketType?._id,
-              quantity: 1,
+              quantity,
             },
           ],
           successPath: "/onboarding/attendee",
@@ -334,9 +361,37 @@ export default function EventCheckoutPage({
             <div className="mt-5 space-y-4">
               <div className="flex justify-between gap-4 text-sm">
                 <span className="text-white/50">
-                  {selectedTicketType?.name || "Standard Admission"}
+                  {selectedTicketType?.name || "Standard Admission"} × {quantity}
                 </span>
-                <span>${basePrice}</span>
+                <span>${(Number(basePrice) * quantity).toFixed(2)}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/35 p-3">
+                <div>
+                  <p className="text-sm font-black">Ticket quantity</p>
+                  <p className="mt-1 text-xs text-white/45">Up to {maxQuantity} per order</p>
+                </div>
+                <div className="flex items-center overflow-hidden rounded-full border border-white/15 bg-black">
+                  <button
+                    type="button"
+                    aria-label="Remove one ticket"
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                    disabled={quantity <= 1}
+                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-white/10 disabled:opacity-30"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-10 text-center font-black" aria-live="polite">{quantity}</span>
+                  <button
+                    type="button"
+                    aria-label="Add one ticket"
+                    onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+                    disabled={quantity >= maxQuantity}
+                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-white/10 disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {selectedAddOns.map((addOn) => (
@@ -423,7 +478,9 @@ export default function EventCheckoutPage({
                     disabled={submitting}
                     className="mt-3 min-h-12 w-full rounded-2xl bg-white px-5 py-4 font-black text-black hover:bg-zinc-200 disabled:opacity-50"
                   >
-                    {submitting ? "Processing..." : "Reserve Ticket"}
+                    {submitting
+                      ? "Processing..."
+                      : `Add ${quantity} Ticket${quantity === 1 ? "" : "s"} & Continue`}
                   </button>
                 </>
               )}

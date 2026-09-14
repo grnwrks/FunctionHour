@@ -2,18 +2,10 @@
 
 import { Id } from "@/convex/_generated/dataModel";
 import DiscoveryEventCard from "./DiscoveryEventCard";
-
-type EventItem = {
-  _id: Id<"events">;
-  name: string;
-  dateString?: string;
-  location?: string;
-  price?: number;
-  imageStorageId?: Id<"_storage">;
-};
+import type { DiscoveryEvent } from "../eventPresentation";
 
 type EventGridProps = {
-  events: EventItem[];
+  events: DiscoveryEvent[];
   savedEventIds: Id<"events">[];
   onToggleSave: (eventId: Id<"events">) => void;
 };

@@ -42,6 +42,21 @@
     --radius: 0.75rem;
   }
 
+  html.light {
+    --background: 30 25% 97%;
+    --foreground: 240 10% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+    --secondary: 240 10% 92%;
+    --secondary-foreground: 240 10% 12%;
+    --muted: 240 8% 92%;
+    --muted-foreground: 240 5% 38%;
+    --border: 240 8% 82%;
+    --input: 240 8% 86%;
+  }
+
   *,
   *::before,
   *::after {
@@ -103,6 +118,71 @@
       transition-duration: 0.01ms !important;
     }
   }
+}
+
+/* Light mode compatibility for the existing dark-first discovery UI. */
+html.light body {
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.10), transparent 30%),
+    radial-gradient(circle at top right, rgba(249, 115, 22, 0.09), transparent 25%),
+    #f8f7fb;
+  color: #18181b;
+}
+
+html.light [class~="bg-black"],
+html.light [class*="bg-black/"],
+html.light [class~="bg-zinc-950"],
+html.light [class*="bg-zinc-950/"],
+html.light [class~="bg-zinc-900"],
+html.light [class*="bg-zinc-900/"],
+html.light [class*="bg-[#07060c]"],
+html.light [class*="bg-[#0d0d11]"] {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+html.light [class~="text-white"],
+html.light [class*="text-white/"] {
+  color: #18181b !important;
+}
+
+html.light [class*="text-zinc-3"],
+html.light [class*="text-zinc-4"],
+html.light [class*="text-zinc-5"],
+html.light [class*="text-gray-4"],
+html.light [class*="text-gray-5"] {
+  color: #52525b !important;
+}
+
+html.light [class*="border-white/"],
+html.light [class*="border-zinc-7"],
+html.light [class*="border-zinc-8"],
+html.light [class*="border-zinc-9"] {
+  border-color: rgba(39, 39, 42, 0.16) !important;
+}
+
+html.light [class*="bg-white/"] {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+html.light .text-white[class*="bg-gradient"],
+html.light [class*="bg-violet-5"].text-white,
+html.light [class*="bg-orange-5"].text-white,
+html.light [class*="bg-fuchsia-5"].text-white {
+  color: #ffffff !important;
+}
+
+html.light .theme-toggle {
+  border-color: rgba(39, 39, 42, 0.18) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #18181b !important;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #f4f4f5;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(39, 39, 42, 0.25);
 }
 
 /* =========================

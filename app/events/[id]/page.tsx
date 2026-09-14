@@ -784,9 +784,12 @@ export default function EventDetailPage({
                               Sold Out
                             </span>
                           ) : (
-                            <span className="rounded-full border border-violet-300/20 bg-violet-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-black text-violet-100">
-                              Available
-                            </span>
+                            <Link
+                              href={`/events/${event._id}/checkout?ticketType=${ticket._id}`}
+                              className="inline-flex min-h-11 items-center rounded-full bg-white px-4 py-3 text-sm font-black text-black transition hover:bg-violet-200"
+                            >
+                              Select tickets →
+                            </Link>
                           )}
                         </div>
                       </div>

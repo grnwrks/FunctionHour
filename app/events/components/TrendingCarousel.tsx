@@ -3,13 +3,14 @@
 import { useRef } from "react";
 import Link from "next/link";
 import EventImage from "./EventImage";
-import { formatEventDate, getEventLocation } from "../eventPresentation";
+import { formatEventDate, getEventLocation, type DiscoveryEvent } from "../eventPresentation";
+import type { Id } from "@/convex/_generated/dataModel";
 
 type Props = {
   city: string;
-  events: any[];
-  savedEventIds: any[];
-  onToggleSave: (id: any) => void;
+  events: DiscoveryEvent[];
+  savedEventIds: Id<"events">[];
+  onToggleSave: (id: Id<"events">) => void;
 };
 
 export default function TrendingCarousel({
