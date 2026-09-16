@@ -1,9 +1,8 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo } from "react";
 import Link from "next/link";
 import ShareEventButton from "@/components/share/ShareEventButton";
-import NotificationPulse from "@/components/notifications/NotificationPulse";
 import { useMutation, useQuery } from "convex/react";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
@@ -15,7 +14,13 @@ import VenueRules from "@/components/functionhour/VenueRules";
 import { getEventViewAttribution } from "@/lib/analytics/eventViewAttribution";
 import { formatEventDate, isEventUpcoming } from "../eventPresentation";
 
-function EventImage({ storageId, name }: { storageId?: Id<"_storage">; name?: string }) {
+function EventImage({
+  storageId,
+  name,
+}: {
+  storageId?: Id<"_storage">;
+  name?: string;
+}) {
   const imageUrl = useQuery(
     api.events.getImageUrl,
     storageId ? { storageId } : "skip",
@@ -34,7 +39,11 @@ function EventImage({ storageId, name }: { storageId?: Id<"_storage">; name?: st
   }
 
   return (
-    <img src={imageUrl} alt={name ? `${name} event` : "Event image"} className="h-full w-full object-cover" />
+    <img
+      src={imageUrl}
+      alt={name ? `${name} event` : "Event image"}
+      className="h-full w-full object-cover"
+    />
   );
 }
 
@@ -93,8 +102,10 @@ export default function EventDetailPage({
     api.eventAccess.getMyEventAccess,
     isLoaded && isSignedIn ? { eventId } : "skip",
   );
-  const canManageEvent = eventAccess?.capabilities.includes("manage_event") === true;
-  const canManageTickets = eventAccess?.capabilities.includes("manage_tickets") === true;
+  const canManageEvent =
+    eventAccess?.capabilities.includes("manage_event") === true;
+  const canManageTickets =
+    eventAccess?.capabilities.includes("manage_tickets") === true;
 
   const myTickets = useQuery(
     api.tickets.getUserTickets,
@@ -118,26 +129,18 @@ export default function EventDetailPage({
         ? Math.min(...activeTicketTypes.map((ticket) => ticket.price))
         : (event?.price ?? 0);
 
-  const savedCreative = useQuery(
-    api.eventCreative.listPublishedByEvent,
-    { eventId }
-  );
-  const announcements = useQuery(
-    api.eventMessages.listPublishedForEvent,
-    { eventId }
-  );
-  const attendees = useQuery(api.tickets.getAttendeesByEvent, { eventId });
-
+  const savedCreative = useQuery(api.eventCreative.listPublishedByEvent, {
+    eventId,
+  });
+  const announcements = useQuery(api.eventMessages.listPublishedForEvent, {
+    eventId,
+  });
   const organizerData = useQuery(
     api.organizers.getOrganizerByUserId,
     event?.userId ? { userId: event.userId } : "skip",
   );
 
-  const createTicket = useMutation(api.tickets.createTicket);
   const trackView = useMutation(api.eventViews.trackEventView);
-
-  const [buying, setBuying] = useState(false);
-  const [message, setMessage] = useState("");
 
   const alreadyPurchased = useMemo(() => {
     if (!myTickets || !event) return false;
@@ -152,44 +155,6 @@ export default function EventDetailPage({
       ...getEventViewAttribution(),
     }).catch(() => {});
   }, [event?._id, trackView]);
-
-  async function handleBuyTicket() {
-    if (!event) return;
-
-    if (!salesOpen) {
-      setMessage("Ticket sales have ended for this event.");
-      return;
-    }
-
-    try {
-      setBuying(true);
-      setMessage("");
-
-      if (!isLoaded) return;
-
-      if (!isSignedIn) {
-        alert("Please sign in before purchasing tickets.");
-        return;
-      }
-
-      await createTicket({
-        eventId: event._id,
-      });
-
-      setMessage("Ticket purchased successfully.");
-    } catch (error: unknown) {
-      console.error(error);
-
-      const errorMessage = error instanceof Error ? error.message : "";
-      if (errorMessage.includes("already have a ticket")) {
-        setMessage("You already purchased a ticket for this event.");
-      } else {
-        setMessage("Something went wrong purchasing your ticket.");
-      }
-    } finally {
-      setBuying(false);
-    }
-  }
 
   if (event === undefined) {
     return (
@@ -227,119 +192,71 @@ export default function EventDetailPage({
     organizer?.organizerName || organizer?.name || "Organizer";
 
   return (
-    <main className="oc-page relative min-h-screen overflow-hidden text-white">
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-18%] top-[-10%] h-[420px] w-full lg:w-[420px] rounded-full bg-violet-600/20 blur-[120px]" />
-
-        <div className="absolute right-[-15%] top-[20%] h-[70vh] sm:h-[520px] w-full sm:w-[520px] rounded-full bg-orange-500/15 blur-[140px]" />
-
-        <div className="absolute bottom-[-20%] left-[20%] h-[70vh] sm:h-[520px] w-full sm:w-[520px] rounded-full bg-violet-500/10 blur-[150px]" />
-
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="h-full w-full bg-[linear-gradient(to_right,rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.16)_1px,transparent_1px)] bg-[size:72px_72px]" />
+    <main className="relative min-h-screen overflow-hidden bg-[#080808] text-white">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(124,58,237,0.12),transparent_34%),radial-gradient(circle_at_90%_30%,rgba(249,115,22,0.08),transparent_28%)]" />
+      <section className="relative mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-8">
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/events"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-white/60 transition hover:text-white"
+          >
+            ← All events
+          </Link>
+          <Link
+            href="/"
+            className="text-xs font-black tracking-[0.22em] text-white"
+          >
+            FUNCTION<span className="text-violet-400">HOUR</span>
+          </Link>
         </div>
 
-        <div className="absolute left-[15%] top-[25%] h-3 w-3 animate-pulse rounded-full bg-orange-300 shadow-[0_0_18px_rgba(251,146,60,.9)]" />
-
-        <div className="absolute right-[18%] top-[38%] h-2 w-2 animate-pulse rounded-full bg-violet-300 shadow-[0_0_18px_rgba(167,139,250,.9)]" />
-      </div>
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
-        <Link href="/events" className="text-sm text-white/50 hover:text-white">
-          ← Back to events
-        </Link>
-
-        <div className="mt-6 grid gap-5 sm:p-8 lg:grid-cols-[1.4fr_0.8fr]">
-          <div>
-            <div className="overflow-hidden max-w-full rounded-[1.5rem] sm:rounded-3xl border border-white/10 bg-white/[0.03]">
-              <div className="relative flex h-[420px] items-center justify-center overflow-hidden bg-white/10">
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent z-10" />
-
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-orange-500/10 z-10" />
-
-                <div className="pointer-events-none absolute right-[-80px] top-[-80px] z-10 h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
-
-                <div className="pointer-events-none absolute left-[-80px] bottom-[-80px] z-10 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
-
-                {/* FUNCTION HOUR WATERMARK */}
-                <div className="absolute left-5 top-5 z-20">
-                  <div className="rounded-full border border-white/10 bg-black/50 px-5 py-2 backdrop-blur-md shadow-[0_0_30px_rgba(139,92,246,0.18)]">
-                    <span className="text-[11px] sm:text-xs font-black tracking-[0.35em]">
-                      <span className="text-white">FUNCTION</span>
-                      <span className="text-violet-500">HOUR</span>
-                    </span>
-                  </div>
-                </div>
-
-                <EventImage storageId={event.imageStorageId} name={event.name} />
+        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(310px,0.7fr)] lg:items-start">
+          <div className="contents lg:block">
+            <div className="order-1 overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111] shadow-2xl sm:rounded-[2rem]">
+              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-zinc-900 sm:aspect-[16/10]">
+                <EventImage
+                  storageId={event.imageStorageId}
+                  name={event.name}
+                />
               </div>
 
-              <div className="p-4 sm:p-6">
-                <p className="text-sm font-black uppercase tracking-[0.35em] text-violet-300/70">
-                  Event Details
+              <div className="p-5 sm:p-7">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-violet-300/80">
+                  {event.category || "Experience"}
                 </p>
 
-                <h1 className="mt-3 max-w-4xl text-2xl sm:text-3xl sm:text-5xl leading-[1.05] sm:leading-tight font-black leading-[0.95] tracking-[-0.04em] sm:tracking-tight sm:text-6xl lg:text-7xl">
+                <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-[-0.04em] sm:text-5xl">
                   {event.name}
                 </h1>
 
-                <p className="mt-5 max-w-3xl text-lg leading-relaxed text-white/70">
+                <p className="mt-4 max-w-3xl text-base leading-7 text-white/65 sm:text-lg">
                   {event.description}
                 </p>
 
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <div className={`flex flex-wrap items-center gap-2 rounded-full border px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] ${salesOpen ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200" : "border-zinc-500/30 bg-zinc-500/10 text-zinc-300"}`}>
-                    <span className={`h-2 w-2 rounded-full ${salesOpen ? "animate-pulse bg-emerald-300" : "bg-zinc-400"}`} />
-                    {salesOpen ? "Upcoming Event" : "Event Ended"}
-                  </div>
-
-                  {salesOpen && (event.ticketsSold ?? 0) > 0 && <div className="flex flex-wrap items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-violet-200">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-violet-300" />
-                    Crowd Active
-                  </div>}
-
-                  <div className="flex flex-wrap items-center gap-2 rounded-full border border-orange-400/20 bg-orange-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-orange-100">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-orange-300" />
-                    Function Hour Signal
-                  </div>
-                </div>
-
-                <div className="mt-6 sm:mt-8 grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl backdrop-blur-xl md:grid-cols-1 sm:grid-cols-2">
+                <div className="mt-6 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2">
                   <EventSignalCard
                     label="Date"
                     value={formatEventDate(event)}
                   />
                   <EventSignalCard
                     label="Location"
-                    value={event.location || "Location pending"}
+                    value={
+                      event.venueName ||
+                      event.location ||
+                      "Location coming soon"
+                    }
                   />
-
-                  {event.venueName && (
-                    <EventSignalCard label="Venue" value={event.venueName} />
-                  )}
-
-                  {(event.city || event.state) && (
-                    <EventSignalCard
-                      label="City"
-                      value={[event.city, event.state]
-                        .filter(Boolean)
-                        .join(", ")}
-                    />
-                  )}
                 </div>
               </div>
             </div>
 
-            <div className="relative mt-6 sm:mt-8 overflow-hidden rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.025] p-4 sm:p-6 shadow-2xl backdrop-blur-2xl sm:p-5 sm:p-8">
-              <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
-
-              <div className="pointer-events-none absolute left-[-80px] bottom-[-80px] h-56 w-56 rounded-full bg-orange-500/10 blur-3xl" />
-
-              <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between gap-5">
+            <div className="order-3 mt-5 overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#111] p-5 sm:mt-6 sm:p-6">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-black uppercase tracking-[0.35em] text-violet-300/70">
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
                     Hosted By
                   </p>
-                  <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
+                  <h2 className="mt-2 text-2xl font-black tracking-tight">
                     {organizerName}
                   </h2>
                   {organizer?.bio && (
@@ -349,16 +266,15 @@ export default function EventDetailPage({
                   )}
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {organizer?.isVerifiedOrganizer && <span className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-violet-100">
-                      Verified Organizer
-                    </span>}
-                    <span className="rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-orange-100">
-                      Function Hour Host
-                    </span>
+                    {organizer?.isVerifiedOrganizer && (
+                      <span className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-violet-100">
+                        Verified Organizer
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[1.75rem] border border-violet-300/20 bg-zinc-900 text-2xl font-black shadow-[0_0_40px_rgba(139,92,246,0.18)]">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 text-xl font-black">
                   {organizer?.avatarUrl ? (
                     <img
                       src={organizer.avatarUrl}
@@ -395,7 +311,7 @@ export default function EventDetailPage({
 
               <Link
                 href={`/organizers/${event.userId}`}
-                className="mt-6 inline-flex rounded-2xl border border-white/10 bg-white/[0.04] px-5 min-h-11 py-3.5 sm:py-3 font-bold text-white transition hover:border-violet-400/30 hover:bg-white/[0.08]"
+                className="mt-5 inline-flex min-h-11 items-center text-sm font-bold text-violet-200 transition hover:text-white"
               >
                 View Organizer Profile →
               </Link>
@@ -412,13 +328,11 @@ export default function EventDetailPage({
                 />
               </div>
 
-              <EventAnnouncements
-                announcements={announcements}
-              />
+              <EventAnnouncements announcements={announcements} />
             </div>
 
-            {savedCreative && savedCreative.length > 0 && (
-              <div className="oc-card mt-6 sm:mt-8 p-4 sm:p-6 sm:p-5 sm:p-8">
+            {canManageEvent && savedCreative && savedCreative.length > 0 && (
+              <div className="order-5 mt-5 rounded-[1.5rem] border border-white/10 bg-[#111] p-5 sm:mt-6 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] text-violet-300/70">
@@ -433,7 +347,6 @@ export default function EventDetailPage({
                       {savedCreative.length === 1 ? "" : "s"}
                     </p>
                   </div>
-
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-1 sm:grid-cols-2">
@@ -488,7 +401,6 @@ export default function EventDetailPage({
                             >
                               Copy Caption
                             </button>
-
                           </div>
                         </>
                       )}
@@ -498,543 +410,250 @@ export default function EventDetailPage({
               </div>
             )}
 
-            <div className="mt-6 sm:mt-8">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-300/70">
-                    Event Commerce
-                  </p>
-                  <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
-                    Merch Drops
-                  </h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
-                    Limited event merchandise, preorder items, and organizer
-                    drops.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/events/${event._id}/merch`}
-                    className="rounded-2xl bg-gradient-to-r from-violet-600 to-orange-500 px-5 min-h-11 py-3.5 sm:py-3 text-sm font-black text-white"
-                  >
-                    Shop Merch →
-                  </Link>
-                {canManageEvent && (
-                  <Link
-                    href={`/events/${event._id}/add-merch`}
-                    className="rounded-2xl border border-orange-300/25 bg-orange-500/10 px-5 min-h-11 py-3.5 sm:py-3 text-sm font-black text-orange-100 hover:bg-orange-500/20"
-                  >
-                    Add Merch →
-                  </Link>
-                )}
-                </div>
-              </div>
-
-              {merch === undefined ? (
-                <div className="mt-4 max-w-full rounded-[1.5rem] sm:rounded-3xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 text-white/50">
-                  Loading merch...
-                </div>
-              ) : merch.length === 0 ? (
-                <div className="mt-4 max-w-full rounded-[1.5rem] sm:rounded-3xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 text-white/50">
-                  No merch added yet.
-                </div>
-              ) : (
-                <div className="mt-4 grid gap-5 md:grid-cols-1 sm:grid-cols-2">
-                  {merch.map((item) => (
-                    <div
-                      key={item._id}
-                      className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.045] to-white/[0.02] shadow-2xl transition duration-300 hover:-translate-y-1 hover:border-orange-300/35 hover:shadow-[0_0_60px_rgba(249,115,22,0.12)]"
-                    >
-                      <div className="pointer-events-none absolute right-[-60px] top-[-60px] h-40 w-40 rounded-full bg-orange-500/10 blur-3xl transition group-hover:bg-violet-500/20" />
-                      <div className="relative flex h-48 items-center justify-center overflow-hidden bg-white/10">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10" />
-                        <MerchImage
-                          imageUrl={item.imageUrl}
-                          storageId={item.imageStorageId}
-                          name={item.name}
-                        />
-                      </div>
-
-                      <div className="p-5">
-                        <h3 className="font-bold">{item.name}</h3>
-
-                        {item.description && (
-                          <p className="mt-2 line-clamp-3 text-sm text-white/60">
-                            {item.description}
-                          </p>
-                        )}
-
-                        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="font-bold">${item.price}</p>
-                          <p className="text-sm text-white/50">
-                            {(item.inventory ?? 0) > 0 ? `${item.inventory} left` : "Sold out"}
-                          </p>
-                        </div>
-
-                        {canManageEvent && (
-                          <Link
-                            href={`/host/events/${event._id}/merch/${item._id}/edit`}
-                            className="mt-4 inline-flex rounded-2xl sm:rounded-xl border border-white/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-semibold text-white hover:bg-white/10"
-                          >
-                            Edit Merch
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <aside className="sticky top-4 sm:p-6 h-fit overflow-hidden rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.025] p-4 shadow-[0_0_90px_rgba(139,92,246,0.14)] backdrop-blur-2xl">
-            <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-56 w-56 rounded-full bg-orange-500/20 blur-3xl" />
-
-            <div className="pointer-events-none absolute left-[-80px] bottom-[-80px] h-56 w-56 rounded-full bg-violet-500/20 blur-3xl" />
-
-            <div className="relative z-10">
-              <p className="text-sm font-black uppercase tracking-[0.35em] text-violet-300/70">
-                Tickets
-              </p>
-
-              <div className="mt-5 text-6xl font-black tracking-[-0.06em]">
-                {startingPrice === null
-                  ? "—"
-                  : startingPrice > 0
-                  ? `$${startingPrice.toLocaleString()}`
-                  : "Free"}
-              </div>
-
-              <p className="mt-2 text-sm text-white/50">
-                {event.totalTickets
-                  ? `${event.totalTickets} total tickets`
-                  : "Limited availability"}
-              </p>
-
-              <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs font-black uppercase tracking-[0.2em] text-white/35">
-                  <span>Crowd Momentum</span>
-                  <span>{event.ticketsSold || 0} sold</span>
-                </div>
-
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-orange-400 shadow-[0_0_20px_rgba(249,115,22,.35)]"
-                    style={{
-                      width: `${
-                        event.totalTickets
-                          ? Math.min(
-                              100,
-                              Math.round(
-                                ((event.ticketsSold || 0) /
-                                  event.totalTickets) *
-                                  100,
-                              ),
-                            )
-                          : event.ticketsSold
-                            ? 35
-                            : 8
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-6">
-                {!salesOpen ? (
-                  <div className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-black text-zinc-300">
-                    Ticket sales ended
+            {(canManageEvent || (merch && merch.length > 0)) && (
+              <div className="order-4 mt-5 sm:mt-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-300/70">
+                      Event Commerce
+                    </p>
+                    <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
+                      Merch Drops
+                    </h2>
+                    <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
+                      Limited event merchandise, preorder items, and organizer
+                      drops.
+                    </p>
                   </div>
-                ) : !isLoaded ? (
-                  <button
-                    disabled
-                    className="w-full rounded-2xl bg-white px-5 py-4 font-black text-black opacity-50"
-                  >
-                    Loading...
-                  </button>
-                ) : !isSignedIn ? (
-                  <SignInButton mode="modal">
-                    <button className="w-full rounded-2xl bg-gradient-to-r from-violet-500 to-orange-500 px-5 py-4 font-black text-white shadow-[0_0_35px_rgba(139,92,246,0.35)]">
-                      Sign in to Buy Ticket
-                    </button>
-                  </SignInButton>
-                ) : alreadyPurchased ? (
-                  <Link
-                    href="/my-tickets"
-                    className="block w-full rounded-2xl bg-green-500 px-5 py-4 text-center font-black text-black shadow-[0_0_30px_rgba(34,197,94,0.25)]"
-                  >
-                    Already Purchased — View Ticket
-                  </Link>
-                ) : (
-                  <Link
-                    href={`/events/${event._id}/checkout`}
-                    className="block w-full rounded-2xl bg-gradient-to-r from-violet-500 to-orange-500 px-5 py-4 text-center font-black text-white shadow-[0_0_35px_rgba(139,92,246,0.35)] transition hover:scale-[1.01]"
-                  >
-                    Continue to Checkout
-                  </Link>
-                )}
-              </div>
 
-              {message && (
-                <p className="mt-4 text-sm text-white/70">{message}</p>
-              )}
-
-              <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-black/50 p-5 text-sm leading-relaxed text-white/55 backdrop-blur-xl">
-                Your ticket will appear under{" "}
-                <Link
-                  prefetch={false}
-                  href="/my-tickets"
-                  className="text-white underline"
-                >
-                  My Tickets
-                </Link>{" "}
-                after purchase.
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        <section className="relative mt-6 sm:mt-8 overflow-hidden rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.02] p-4 sm:p-6 shadow-2xl backdrop-blur-2xl sm:p-5 sm:p-8">
-          <div className="pointer-events-none absolute right-[-90px] top-[-90px] h-60 w-60 rounded-full bg-violet-500/15 blur-3xl" />
-
-          <div className="relative z-10">
-            <p className="text-sm font-black uppercase tracking-[0.3em] text-violet-300/70">
-              Ticket Options
-            </p>
-
-            <h2 className="mt-2 text-2xl sm:text-3xl sm:text-4xl font-black tracking-[-0.04em] sm:tracking-tight">
-              Choose Your Experience
-            </h2>
-
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/45">
-              Pick the access level that matches your night, from standard
-              admission to premium event experiences.
-            </p>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-1 sm:grid-cols-2">
-              {ticketTypes === undefined ? (
-                <div className="rounded-2xl border border-white/10 bg-black p-5 text-white/50">
-                  Loading ticket options...
-                </div>
-              ) : ticketTypes.filter((ticket) => ticket.isActive !== false)
-                  .length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-black p-5 text-white/50">
-                  Standard admission available.
-                </div>
-              ) : (
-                ticketTypes
-                  .filter((ticket) => ticket.isActive !== false)
-                  .map((ticket) => {
-                    const soldOut =
-                      ticket.isSoldOut ||
-                      ticket.salesPaused ||
-                      (ticket.quantity &&
-                        (ticket.sold ?? 0) >= ticket.quantity);
-
-                    return (
-                      <div
-                        key={ticket._id}
-                        className={`group relative overflow-hidden rounded-[2rem] border p-4 sm:p-6 transition duration-300 hover:-translate-y-1 ${
-                          soldOut
-                            ? "border-red-500/20 bg-red-500/5"
-                            : "border-white/10 bg-black/60 backdrop-blur-xl hover:border-violet-400/30 hover:bg-zinc-950"
-                        }`}
+                  <div className="flex flex-wrap gap-2">
+                    {merch && merch.length > 0 && (
+                      <Link
+                        href={`/events/${event._id}/merch`}
+                        className="rounded-2xl bg-gradient-to-r from-violet-600 to-orange-500 px-5 min-h-11 py-3.5 sm:py-3 text-sm font-black text-white"
                       >
-                        <div className="pointer-events-none absolute inset-0 opacity-0 transition duration-700 group-hover:opacity-100">
-                          <div className="absolute -left-1/2 top-0 h-full w-1/2 skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_2s_ease-in-out_infinite]" />
+                        Shop Merch →
+                      </Link>
+                    )}
+                    {canManageEvent && (
+                      <Link
+                        href={`/events/${event._id}/add-merch`}
+                        className="rounded-2xl border border-orange-300/25 bg-orange-500/10 px-5 min-h-11 py-3.5 sm:py-3 text-sm font-black text-orange-100 hover:bg-orange-500/20"
+                      >
+                        Add Merch →
+                      </Link>
+                    )}
+                  </div>
+                </div>
+
+                {merch === undefined ? (
+                  <div className="mt-4 max-w-full rounded-[1.5rem] sm:rounded-3xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 text-white/50">
+                    Loading merch...
+                  </div>
+                ) : merch.length === 0 ? (
+                  <div className="mt-4 max-w-full rounded-[1.5rem] sm:rounded-3xl border border-white/10 bg-white/[0.03] p-4 sm:p-6 text-white/50">
+                    No merch added yet.
+                  </div>
+                ) : (
+                  <div className="mt-4 grid gap-5 md:grid-cols-1 sm:grid-cols-2">
+                    {merch.map((item) => (
+                      <div
+                        key={item._id}
+                        className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/[0.045] to-white/[0.02] shadow-2xl transition duration-300 hover:-translate-y-1 hover:border-orange-300/35 hover:shadow-[0_0_60px_rgba(249,115,22,0.12)]"
+                      >
+                        <div className="pointer-events-none absolute right-[-60px] top-[-60px] h-40 w-40 rounded-full bg-orange-500/10 blur-3xl transition group-hover:bg-violet-500/20" />
+                        <div className="relative flex h-48 items-center justify-center overflow-hidden bg-white/10">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10" />
+                          <MerchImage
+                            imageUrl={item.imageUrl}
+                            storageId={item.imageStorageId}
+                            name={item.name}
+                          />
                         </div>
 
-                        <div className="relative flex items-start justify-between gap-4">
-                          <div>
-                            <h3 className="text-2xl font-black tracking-[-0.04em] sm:tracking-tight">
-                              {ticket.name}
-                            </h3>
+                        <div className="p-5">
+                          <h3 className="font-bold">{item.name}</h3>
 
-                            {ticket.description && (
-                              <p className="mt-2 text-sm text-white/50">
-                                {ticket.description}
-                              </p>
-                            )}
+                          {item.description && (
+                            <p className="mt-2 line-clamp-3 text-sm text-white/60">
+                              {item.description}
+                            </p>
+                          )}
+
+                          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="font-bold">${item.price}</p>
+                            <p className="text-sm text-white/50">
+                              {(item.inventory ?? 0) > 0
+                                ? `${item.inventory} left`
+                                : "Sold out"}
+                            </p>
                           </div>
 
-                          <p className="text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight text-violet-200">
-                            ${ticket.price}
-                          </p>
-                        </div>
-
-                        {ticket.perks && ticket.perks.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {ticket.perks.map((perk) => (
-                              <span
-                                key={perk}
-                                className="rounded-full border border-violet-300/20 bg-violet-500/15 px-3 py-1 text-[11px] sm:text-xs font-black text-violet-100"
-                              >
-                                {perk}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm text-white/45">
-                            {ticket.quantity
-                              ? `${Math.max(ticket.quantity - (ticket.sold ?? 0), 0)} left`
-                              : "Available"}
-                          </p>
-
-                          {!salesOpen ? (
-                            <span className="rounded-full border border-white/10 bg-white/5 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-black text-zinc-400">
-                              Sales Ended
-                            </span>
-                          ) : soldOut ? (
-                            <span className="rounded-full bg-red-500 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-black text-white">
-                              Sold Out
-                            </span>
-                          ) : (
+                          {canManageEvent && (
                             <Link
-                              href={`/events/${event._id}/checkout?ticketType=${ticket._id}`}
-                              className="inline-flex min-h-11 items-center rounded-full bg-white px-4 py-3 text-sm font-black text-black transition hover:bg-violet-200"
+                              href={`/host/events/${event._id}/merch/${item._id}/edit`}
+                              className="mt-4 inline-flex rounded-2xl sm:rounded-xl border border-white/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-semibold text-white hover:bg-white/10"
                             >
-                              Select tickets →
+                              Edit Merch
                             </Link>
                           )}
                         </div>
                       </div>
-                    );
-                  })
-              )}
-            </div>
-
-            {ticketAddOns &&
-              ticketAddOns.filter((addOn) => addOn.isActive !== false).length >
-                0 && (
-                <div className="mt-6 sm:mt-8">
-                  <p className="text-sm uppercase tracking-[0.25em] text-orange-400">
-                    Add-ons
-                  </p>
-
-                  <div className="mt-4 grid gap-4 md:grid-cols-1 sm:grid-cols-2">
-                    {ticketAddOns
-                      .filter((addOn) => addOn.isActive !== false)
-                      .map((addOn) => (
-                        <div
-                          key={addOn._id}
-                          className="rounded-2xl border border-white/10 bg-black/55 p-5 backdrop-blur-xl transition hover:border-orange-300/30 hover:bg-white/[0.05]"
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="font-black">{addOn.name}</h3>
-
-                              {addOn.description && (
-                                <p className="mt-2 text-sm text-white/50">
-                                  {addOn.description}
-                                </p>
-                              )}
-
-                              {addOn.isRequired && (
-                                <p className="mt-3 text-[11px] sm:text-xs font-bold text-orange-300">
-                                  Required add-on
-                                </p>
-                              )}
-                            </div>
-
-                            <p className="font-black">${addOn.price}</p>
-                          </div>
-
-                          {addOn.isSoldOut && (
-                            <span className="mt-4 inline-flex rounded-full bg-red-500 px-3 py-1 text-[11px] sm:text-xs font-black text-white">
-                              Sold Out
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    ))}
                   </div>
-                </div>
-              )}
-          </div>
-          <div className="mt-6 flex justify-end">
-            <NotificationPulse />
-          </div>
-
-          <div className="mt-6">
-            <ShareEventButton
-              eventId={event?._id || ""}
-              title={event?.name}
-              location={event?.location}
-            />
-          </div>
-        </section>
-
-        <section className="relative mt-6 sm:mt-8 overflow-hidden rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.02] p-4 sm:p-6 shadow-2xl backdrop-blur-2xl sm:p-5 sm:p-8">
-          <div className="pointer-events-none absolute left-[-90px] bottom-[-90px] h-60 w-60 rounded-full bg-orange-500/15 blur-3xl" />
-
-          <div className="relative z-10">
-            <p className="text-sm font-black uppercase tracking-[0.3em] text-orange-300/70">
-              Crowd Signal
-            </p>
-
-            <h2 className="mt-2 text-2xl sm:text-3xl sm:text-4xl font-black tracking-[-0.04em] sm:tracking-tight">
-              Who’s Going
-            </h2>
-
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/45">
-              See the crowd forming before doors open.
-            </p>
-
-            <div className="mt-5 rounded-[2rem] border border-white/10 bg-black/40 p-5 backdrop-blur-xl">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center">
-                  {attendees?.slice(0, 6).map((attendee, index) => (
-                    <div
-                      key={attendee.id}
-                      className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-black bg-zinc-900 text-lg font-black shadow-xl"
-                      style={{ marginLeft: index === 0 ? 0 : -12 }}
-                    >
-                      {attendee.avatarUrl ? (
-                        <img
-                          src={attendee.avatarUrl}
-                          alt={attendee.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        attendee.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                  ))}
-
-                  {!attendees?.length && (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-violet-300/20 bg-violet-500/15 text-lg font-black text-violet-100">
-                      FH
-                    </div>
-                  )}
-                </div>
-
-                <div className="sm:text-right">
-                  <p className="text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
-                    {event.ticketsSold || 0}
-                  </p>
-
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-white/45">
-                    Crowd Momentum
-                  </p>
-                </div>
+                )}
               </div>
-
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-violet-500 to-orange-500"
-                  style={{
-                    width: `${
-                      event.totalTickets
-                        ? Math.min(
-                            100,
-                            Math.round(
-                              ((event.ticketsSold || 0) / event.totalTickets) *
-                                100,
-                            ),
-                          )
-                        : event.ticketsSold
-                          ? 35
-                          : 8
-                    }%`,
-                  }}
-                />
-              </div>
-
-              <p className="mt-4 text-sm leading-relaxed text-white/55">
-                See who’s attending, feel the momentum, and connect with the
-                crowd before the event starts.
-              </p>
-            </div>
-          </div>
-
-        </section>
-
-        <section className="relative mt-6 sm:mt-8 overflow-hidden rounded-[2.25rem] border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] p-4 sm:p-6 shadow-2xl backdrop-blur-2xl sm:p-5 sm:p-8">
-          <div className="pointer-events-none absolute right-[-90px] top-[-90px] h-60 w-60 rounded-full bg-violet-500/15 blur-3xl" />
-
-          <div className="relative z-10">
-            <p className="text-sm font-black uppercase tracking-[0.3em] text-violet-300/70">
-              Refund Policy
-            </p>
-
-            <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
-              Event Refund Terms
-            </h2>
-
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/45 p-5 backdrop-blur-xl">
-              <p className="text-base leading-relaxed text-white/75">
-                {event.refundPolicy ||
-                  "All sales are final unless otherwise stated by the event host."}
-              </p>
-
-              {event.refundDeadline && (
-                <div className="mt-5">
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/40">
-                    Refund Deadline
-                  </p>
-
-                  <p className="mt-1 font-semibold text-white">
-                    {event.refundDeadline}
-                  </p>
-                </div>
-              )}
-
-              {event.refundContactEmail && (
-                <div className="mt-5">
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white/40">
-                    Refund Contact
-                  </p>
-
-                  <a
-                    href={`mailto:${event.refundContactEmail}`}
-                    className="mt-1 inline-block font-semibold text-orange-400 hover:text-orange-300"
-                  >
-                    {event.refundContactEmail}
-                  </a>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </section>
-
-        <section className="relative mt-6 sm:mt-8 overflow-hidden rounded-[2.5rem] border border-orange-300/20 bg-gradient-to-r from-violet-500/15 via-white/[0.035] to-orange-500/15 p-7 shadow-[0_0_90px_rgba(249,115,22,0.12)] backdrop-blur-2xl sm:p-9">
-          <div className="pointer-events-none absolute right-[-90px] top-[-90px] h-60 w-60 rounded-full bg-orange-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute left-[-90px] bottom-[-90px] h-60 w-60 rounded-full bg-violet-500/20 blur-3xl" />
-
-          <div className="relative z-10 flex flex-col gap-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-[11px] sm:text-xs font-black uppercase tracking-[0.32em] text-orange-200/70">
-                Event Signal
-              </p>
-
-              <h2 className="mt-3 max-w-3xl text-2xl sm:text-3xl sm:text-4xl font-black tracking-[-0.04em] sm:tracking-tight sm:text-2xl sm:text-5xl">
-                Don’t just hear about it later.
-              </h2>
-
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-                Join the crowd before doors open. Tickets, merch, venue details,
-                and event updates are all connected here.
-              </p>
-            </div>
-
-            {salesOpen ? (
-              <Link
-                href={`/events/${event._id}/checkout`}
-                className="rounded-2xl bg-white px-6 py-4 text-center text-sm font-black uppercase tracking-wide text-black transition hover:bg-orange-200"
-              >
-                Secure Ticket →
-              </Link>
-            ) : (
-              <span className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-center text-sm font-black uppercase tracking-wide text-zinc-400">
-                Event Ended
-              </span>
             )}
           </div>
 
-        </section>
+          <aside className="order-2 h-fit overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#141414] p-5 shadow-2xl lg:sticky lg:top-5 sm:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">
+              Tickets
+            </p>
+
+            <div className="mt-3 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm text-white/45">Starting at</p>
+                <p className="mt-1 text-4xl font-black tracking-[-0.05em]">
+                  {startingPrice === null
+                    ? "—"
+                    : startingPrice > 0
+                      ? `$${startingPrice.toLocaleString()}`
+                      : "Free"}
+                </p>
+              </div>
+              {event.totalTickets ? (
+                <p className="pb-1 text-right text-xs font-semibold text-white/45">
+                  {Math.max(event.totalTickets - (event.ticketsSold ?? 0), 0)}{" "}
+                  remaining
+                </p>
+              ) : null}
+            </div>
+
+            {activeTicketTypes.length > 0 && (
+              <div className="mt-5 space-y-2 border-t border-white/10 pt-5">
+                {activeTicketTypes.map((ticket) => {
+                  const soldOut =
+                    ticket.isSoldOut ||
+                    ticket.salesPaused ||
+                    Boolean(
+                      ticket.quantity && (ticket.sold ?? 0) >= ticket.quantity,
+                    );
+
+                  return (
+                    <div
+                      key={ticket._id}
+                      className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/30 px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold">
+                          {ticket.name}
+                        </p>
+                        <p
+                          className={`mt-0.5 text-xs ${soldOut ? "text-red-300" : "text-white/40"}`}
+                        >
+                          {soldOut ? "Sold out" : "Available"}
+                        </p>
+                      </div>
+                      <p className="shrink-0 font-black">
+                        {ticket.price > 0
+                          ? `$${ticket.price.toLocaleString()}`
+                          : "Free"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {ticketAddOns &&
+              ticketAddOns.some((addOn) => addOn.isActive !== false) && (
+                <p className="mt-4 text-xs leading-5 text-white/45">
+                  Optional upgrades are available during checkout.
+                </p>
+              )}
+
+            <div className="mt-5">
+              {!salesOpen ? (
+                <div className="w-full rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-center font-bold text-zinc-400">
+                  Ticket sales ended
+                </div>
+              ) : !isLoaded ? (
+                <button
+                  disabled
+                  className="w-full rounded-xl bg-white px-5 py-4 font-black text-black opacity-50"
+                >
+                  Loading…
+                </button>
+              ) : !isSignedIn ? (
+                <SignInButton mode="modal">
+                  <button className="w-full rounded-xl bg-white px-5 py-4 font-black text-black transition hover:bg-violet-100">
+                    Sign in to get tickets
+                  </button>
+                </SignInButton>
+              ) : alreadyPurchased ? (
+                <Link
+                  href="/my-tickets"
+                  className="block w-full rounded-xl bg-emerald-400 px-5 py-4 text-center font-black text-black"
+                >
+                  View your ticket
+                </Link>
+              ) : (
+                <Link
+                  href={`/events/${event._id}/checkout`}
+                  className="block w-full rounded-xl bg-gradient-to-r from-violet-500 to-orange-500 px-5 py-4 text-center font-black text-white transition hover:brightness-110"
+                >
+                  Get tickets
+                </Link>
+              )}
+            </div>
+
+            <p className="mt-4 text-center text-xs text-white/35">
+              Secure checkout · Tickets appear in My Tickets
+            </p>
+
+            <div className="mt-5 border-t border-white/10 pt-5">
+              <ShareEventButton
+                eventId={event._id}
+                title={event.name}
+                location={event.location}
+              />
+            </div>
+          </aside>
+        </div>
+
+        <details className="mt-5 rounded-[1.5rem] border border-white/10 bg-[#111] p-5 open:bg-[#141414] sm:mt-6 sm:p-6">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-black">
+            <span>Refunds and purchase terms</span>
+            <span className="text-sm font-semibold text-white/40">
+              View details
+            </span>
+          </summary>
+          <div className="mt-5 border-t border-white/10 pt-5">
+            <p className="leading-7 text-white/65">
+              {event.refundPolicy ||
+                "All sales are final unless otherwise stated by the event host."}
+            </p>
+
+            {event.refundDeadline && (
+              <p className="mt-4 text-sm text-white/50">
+                Refund deadline:{" "}
+                <span className="font-semibold text-white">
+                  {event.refundDeadline}
+                </span>
+              </p>
+            )}
+
+            {event.refundContactEmail && (
+              <a
+                href={`mailto:${event.refundContactEmail}`}
+                className="mt-3 inline-block text-sm font-semibold text-orange-300 hover:text-orange-200"
+              >
+                Contact {event.refundContactEmail}
+              </a>
+            )}
+          </div>
+        </details>
 
         <EventLocationPreview
           location={event.location}
@@ -1042,7 +661,6 @@ export default function EventDetailPage({
           city={event.city}
           state={event.state}
         />
-
       </section>
       <div className="h-28 sm:hidden" />
 
@@ -1058,8 +676,8 @@ export default function EventDetailPage({
               {startingPrice === null
                 ? "—"
                 : startingPrice > 0
-                ? `$${startingPrice.toLocaleString()}`
-                : "Free"}
+                  ? `$${startingPrice.toLocaleString()}`
+                  : "Free"}
             </p>
           </div>
 
@@ -1107,14 +725,12 @@ export default function EventDetailPage({
 
 function EventSignalCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/35 p-4 transition hover:border-orange-300/30 hover:bg-white/[0.055]">
-      <div className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-0 transition group-hover:opacity-100" />
-
-      <p className="text-[11px] sm:text-xs uppercase tracking-[0.24em] text-white/35">
+    <div className="min-w-0 rounded-xl bg-white/[0.04] px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">
         {label}
       </p>
 
-      <p className="mt-2 font-black text-white">{value}</p>
+      <p className="mt-1 text-sm font-bold leading-6 text-white">{value}</p>
     </div>
   );
 }
