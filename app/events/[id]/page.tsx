@@ -13,8 +13,9 @@ import EventAnnouncements from "@/components/events/EventAnnouncements";
 import type { Id } from "@/convex/_generated/dataModel";
 import VenueRules from "@/components/functionhour/VenueRules";
 import { getEventViewAttribution } from "@/lib/analytics/eventViewAttribution";
+import { formatEventDate, isEventUpcoming } from "../eventPresentation";
 
-function EventImage({ storageId }: { storageId?: Id<"_storage"> }) {
+function EventImage({ storageId, name }: { storageId?: Id<"_storage">; name?: string }) {
   const imageUrl = useQuery(
     api.events.getImageUrl,
     storageId ? { storageId } : "skip",
@@ -33,7 +34,7 @@ function EventImage({ storageId }: { storageId?: Id<"_storage"> }) {
   }
 
   return (
-    <img src={imageUrl} alt="Event" className="h-full w-full object-cover" />
+    <img src={imageUrl} alt={name ? `${name} event` : "Event image"} className="h-full w-full object-cover" />
   );
 }
 
@@ -87,6 +88,7 @@ export default function EventDetailPage({
   const { isLoaded, isSignedIn } = useUser();
 
   const event = useQuery(api.events.getById, { eventId });
+  const salesOpen = event ? isEventUpcoming(event) : false;
   const eventAccess = useQuery(
     api.eventAccess.getMyEventAccess,
     isLoaded && isSignedIn ? { eventId } : "skip",
@@ -154,6 +156,11 @@ export default function EventDetailPage({
   async function handleBuyTicket() {
     if (!event) return;
 
+    if (!salesOpen) {
+      setMessage("Ticket sales have ended for this event.");
+      return;
+    }
+
     try {
       setBuying(true);
       setMessage("");
@@ -170,10 +177,11 @@ export default function EventDetailPage({
       });
 
       setMessage("Ticket purchased successfully.");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
 
-      if (String(error?.message || "").includes("already have a ticket")) {
+      const errorMessage = error instanceof Error ? error.message : "";
+      if (errorMessage.includes("already have a ticket")) {
         setMessage("You already purchased a ticket for this event.");
       } else {
         setMessage("Something went wrong purchasing your ticket.");
@@ -209,6 +217,11 @@ export default function EventDetailPage({
     );
   }
 
+  const eventDetails = event as typeof event & {
+    entryPolicy?: string;
+    reEntryPolicy?: string;
+    isVenueVerified?: boolean;
+  };
   const organizer = organizerData?.organizer;
   const organizerName =
     organizer?.organizerName || organizer?.name || "Organizer";
@@ -257,7 +270,7 @@ export default function EventDetailPage({
                   </div>
                 </div>
 
-                <EventImage storageId={event.imageStorageId} />
+                <EventImage storageId={event.imageStorageId} name={event.name} />
               </div>
 
               <div className="p-4 sm:p-6">
@@ -274,15 +287,15 @@ export default function EventDetailPage({
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <div className="flex flex-wrap items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-emerald-200">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-                    Live Event
+                  <div className={`flex flex-wrap items-center gap-2 rounded-full border px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] ${salesOpen ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-200" : "border-zinc-500/30 bg-zinc-500/10 text-zinc-300"}`}>
+                    <span className={`h-2 w-2 rounded-full ${salesOpen ? "animate-pulse bg-emerald-300" : "bg-zinc-400"}`} />
+                    {salesOpen ? "Upcoming Event" : "Event Ended"}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-violet-200">
+                  {salesOpen && (event.ticketsSold ?? 0) > 0 && <div className="flex flex-wrap items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-violet-200">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-violet-300" />
                     Crowd Active
-                  </div>
+                  </div>}
 
                   <div className="flex flex-wrap items-center gap-2 rounded-full border border-orange-400/20 bg-orange-500/10 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-orange-100">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-orange-300" />
@@ -293,7 +306,7 @@ export default function EventDetailPage({
                 <div className="mt-6 sm:mt-8 grid gap-4 rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl backdrop-blur-xl md:grid-cols-1 sm:grid-cols-2">
                   <EventSignalCard
                     label="Date"
-                    value={event.dateString || "Date pending"}
+                    value={formatEventDate(event)}
                   />
                   <EventSignalCard
                     label="Location"
@@ -336,9 +349,9 @@ export default function EventDetailPage({
                   )}
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-violet-100">
+                    {organizer?.isVerifiedOrganizer && <span className="rounded-full border border-violet-300/20 bg-violet-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-violet-100">
                       Verified Organizer
-                    </span>
+                    </span>}
                     <span className="rounded-full border border-orange-300/20 bg-orange-500/10 px-3 py-1 text-[11px] sm:text-xs font-black text-orange-100">
                       Function Hour Host
                     </span>
@@ -389,26 +402,13 @@ export default function EventDetailPage({
 
               <div className="mt-6 sm:mt-8">
                 <VenueRules
-                  age={event.ageRequirement || "21+"}
-                  dressCode={
-                    event.dressCode || "Upscale nightlife attire encouraged"
-                  }
-                  parking={
-                    event.parkingInfo ||
-                    "Street parking & nearby garages available"
-                  }
-                  entryPolicy={
-                    event.entryNotes ||
-                    (event as any).entryPolicy ||
-                    "Government-issued ID required"
-                  }
-                  refundPolicy={
-                    event.refundPolicy || "All sales final unless canceled"
-                  }
-                  reEntry={
-                    (event as any).reEntryPolicy ||
-                    "Re-entry allowed before midnight"
-                  }
+                  age={event.ageRequirement}
+                  dressCode={event.dressCode}
+                  parking={event.parkingInfo}
+                  entryPolicy={event.entryNotes || eventDetails.entryPolicy}
+                  refundPolicy={event.refundPolicy}
+                  reEntry={eventDetails.reEntryPolicy}
+                  isVerified={eventDetails.isVenueVerified === true}
                 />
               </div>
 
@@ -568,7 +568,7 @@ export default function EventDetailPage({
                         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <p className="font-bold">${item.price}</p>
                           <p className="text-sm text-white/50">
-                            {item.inventory ?? 0} left
+                            {(item.inventory ?? 0) > 0 ? `${item.inventory} left` : "Sold out"}
                           </p>
                         </div>
 
@@ -642,7 +642,11 @@ export default function EventDetailPage({
               </div>
 
               <div className="mt-6">
-                {!isLoaded ? (
+                {!salesOpen ? (
+                  <div className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-center font-black text-zinc-300">
+                    Ticket sales ended
+                  </div>
+                ) : !isLoaded ? (
                   <button
                     disabled
                     className="w-full rounded-2xl bg-white px-5 py-4 font-black text-black opacity-50"
@@ -779,7 +783,11 @@ export default function EventDetailPage({
                               : "Available"}
                           </p>
 
-                          {soldOut ? (
+                          {!salesOpen ? (
+                            <span className="rounded-full border border-white/10 bg-white/5 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-black text-zinc-400">
+                              Sales Ended
+                            </span>
+                          ) : soldOut ? (
                             <span className="rounded-full bg-red-500 px-4 min-h-11 py-3.5 sm:py-3 sm:py-2 text-sm font-black text-white">
                               Sold Out
                             </span>
@@ -897,7 +905,7 @@ export default function EventDetailPage({
 
                   {!attendees?.length && (
                     <div className="flex h-14 w-14 items-center justify-center rounded-full border border-violet-300/20 bg-violet-500/15 text-lg font-black text-violet-100">
-                      OC
+                      FH
                     </div>
                   )}
                 </div>
@@ -952,7 +960,7 @@ export default function EventDetailPage({
             </p>
 
             <h2 className="mt-2 text-2xl sm:text-3xl font-black tracking-[-0.04em] sm:tracking-tight">
-              Purchase Protection
+              Event Refund Terms
             </h2>
 
             <div className="mt-4 rounded-2xl border border-white/10 bg-black/45 p-5 backdrop-blur-xl">
@@ -1012,12 +1020,18 @@ export default function EventDetailPage({
               </p>
             </div>
 
-            <Link
-              href={`/events/${event._id}/checkout`}
-              className="rounded-2xl bg-white px-6 py-4 text-center text-sm font-black uppercase tracking-wide text-black transition hover:bg-orange-200"
-            >
-              Secure Ticket →
-            </Link>
+            {salesOpen ? (
+              <Link
+                href={`/events/${event._id}/checkout`}
+                className="rounded-2xl bg-white px-6 py-4 text-center text-sm font-black uppercase tracking-wide text-black transition hover:bg-orange-200"
+              >
+                Secure Ticket →
+              </Link>
+            ) : (
+              <span className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-center text-sm font-black uppercase tracking-wide text-zinc-400">
+                Event Ended
+              </span>
+            )}
           </div>
 
         </section>
@@ -1049,7 +1063,11 @@ export default function EventDetailPage({
             </p>
           </div>
 
-          {!isLoaded ? (
+          {!salesOpen ? (
+            <span className="shrink-0 rounded-2xl border border-white/10 bg-white/5 px-6 py-4 font-black text-zinc-400">
+              Sales Ended
+            </span>
+          ) : !isLoaded ? (
             <button
               type="button"
               disabled

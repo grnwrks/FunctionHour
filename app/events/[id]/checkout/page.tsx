@@ -7,6 +7,7 @@ import { SignInButton, useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { isEventUpcoming } from "../../eventPresentation";
 
 export default function EventCheckoutPage({
   params,
@@ -225,6 +226,20 @@ export default function EventCheckoutPage({
       </div>
       <div className="h-10 sm:hidden" />
     </main>
+    );
+  }
+
+  if (!isEventUpcoming(event)) {
+    return (
+      <main className="min-h-screen bg-black px-4 py-16 text-white">
+        <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center">
+          <h1 className="text-3xl font-black">Ticket sales have ended</h1>
+          <p className="mt-3 text-zinc-400">This event is no longer accepting ticket orders.</p>
+          <Link href={`/events/${eventId}`} className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 font-black text-black">
+            Return to event
+          </Link>
+        </div>
+      </main>
     );
   }
 

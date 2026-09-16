@@ -200,9 +200,16 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Ticket checkout error:", error);
 
+    const message = error instanceof Error ? error.message : "";
+    const salesEnded = message.includes("Ticket sales have ended");
+
     return NextResponse.json(
-      { error: "Unable to create ticket checkout session." },
-      { status: 500 }
+      {
+        error: salesEnded
+          ? "Ticket sales have ended for this event."
+          : "Unable to create ticket checkout session.",
+      },
+      { status: salesEnded ? 409 : 500 }
     );
   }
 }

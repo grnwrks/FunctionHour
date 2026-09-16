@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireEventCapability } from "./eventAccess";
+import { isEventUpcoming } from "./eventDates";
 
 export type Metrics = {
   soldTickets: number;
@@ -138,7 +139,9 @@ export const createEvent = mutation({
 export const getAll = query({
   args: {},
   handler: async (ctx) => {
-    const events = await ctx.db.query("events").collect();
+    const events = (await ctx.db.query("events").collect()).filter((event) =>
+      isEventUpcoming(event),
+    );
 
     return await Promise.all(
       events.map(async (event) => {
@@ -174,7 +177,9 @@ export const getAll = query({
 export const getMapEvents = query({
   args: {},
   handler: async (ctx) => {
-    const events = await ctx.db.query("events").collect();
+    const events = (await ctx.db.query("events").collect()).filter((event) =>
+      isEventUpcoming(event),
+    );
 
     return await Promise.all(
       events.map(async (event) => {
@@ -289,10 +294,10 @@ export const getEventsByCity = query({
   handler: async (ctx, args) => {
     const city = args.city.trim();
 
-    const events = await ctx.db
+    const events = (await ctx.db
       .query("events")
       .withIndex("by_city", (q) => q.eq("city", city))
-      .collect();
+      .collect()).filter((event) => isEventUpcoming(event));
 
     return await Promise.all(
       events.map(async (event) => {

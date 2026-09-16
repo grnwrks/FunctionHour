@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   SignedIn,
@@ -12,6 +12,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import OrganizerPortalLink from "@/components/OrganizerPortalLink";
+import Footer from "@/components/Footer";
 import ExperienceHero, { type QuickFilter } from "./components/ExperienceHero";
 import TrendingCarousel from "./components/TrendingCarousel";
 import DiscoveryCollections from "./components/DiscoveryCollections";
@@ -20,6 +21,7 @@ import FeaturedHosts from "./components/FeaturedHosts";
 import EventGrid from "./components/EventGrid";
 import {
   discoveryScore,
+  isEventUpcoming,
   isThisWeekend,
   isTonight,
   matchesCollection,
@@ -78,6 +80,11 @@ export default function EventsPage() {
   const savedEventIds = useQuery(api.savedEvents.getSavedEventIds) || [];
   const toggleSaved = useMutation(api.savedEvents.toggleSavedEvent);
 
+  useEffect(() => {
+    const requestedCity = new URLSearchParams(window.location.search).get("city");
+    if (requestedCity) setCity(requestedCity);
+  }, []);
+
   const organizerStats = useMemo(() => {
     const counts = new Map<string, number>();
     for (const event of events ?? []) {
@@ -96,6 +103,7 @@ export default function EventsPage() {
     const baseEvents = (view === "mine" ? myEvents ?? [] : events ?? []) as DiscoveryEvent[];
 
     return baseEvents
+      .filter((event) => isEventUpcoming(event))
       .filter((event) => eventMatchesCategory(event, category))
       .filter((event) => eventMatchesCity(event, city))
       .filter((event) => eventMatchesSearch(event, search))
@@ -250,10 +258,7 @@ export default function EventsPage() {
         </section>
       )}
 
-      <footer className="border-t border-zinc-900 px-6 py-10 text-center text-sm text-zinc-500">
-        <p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p>
-        <p className="mt-4">© 2026 Function Hour. All rights reserved.</p>
-      </footer>
+      <Footer />
     </main>
   );
 }

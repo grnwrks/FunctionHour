@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { getRecommendationScore } from "@/lib/recommendationScore";
 
 const signals = [
-  "Events gaining momentum near you",
-  "Nightlife picks with strong crowd energy",
-  "Organizer drops you may want to follow",
-  "Saved-event style recommendations",
+  { title: "Popular near you", description: "Upcoming experiences with the strongest local interest." },
+  { title: "Nightlife with momentum", description: "Parties, concerts, and late-night events drawing a crowd." },
+  { title: "Hosts to watch", description: "Upcoming releases from active Function Hour organizers." },
+  { title: "More like your favorites", description: "Browse events related to the experiences you save and explore." },
 ];
 
 export default function RecommendationsPage() {
@@ -33,21 +32,21 @@ export default function RecommendationsPage() {
           </h1>
 
           <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-400">
-            A premium recommendation surface prepared for AI-powered event discovery.
-            For beta, this page safely introduces the experience without changing Convex schema.
+            Explore upcoming experiences selected from current event activity,
+            local interest, and the categories people are discovering now.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {signals.map((item, idx) => (
               <div
-                key={item}
+                key={item.title}
               data-rank={idx + 1}
                 className="rounded-2xl border border-white/10 bg-black/30 p-4"
               >
                 <div className="mb-4 h-1.5 w-16 rounded-full bg-gradient-to-r from-orange-400 to-violet-400" />
-                <p className="font-semibold">{item}</p>
+                <p className="font-semibold">{item.title}</p>
                 <p className="mt-2 text-sm leading-6 text-white/45">
-                  Recommendation logic hook prepared for future personalization.
+                  {item.description}
                 </p>
               </div>
             ))}

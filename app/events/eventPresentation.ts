@@ -32,6 +32,20 @@ export function getEventTimestamp(event: DiscoveryEvent) {
   return Date.parse(event.dateString);
 }
 
+export function isEventUpcoming(
+  event: DiscoveryEvent,
+  referenceTime = Date.now(),
+) {
+  const dateOnly = event.dateString?.match(/^\d{4}-\d{2}-\d{2}$/);
+  if (dateOnly) {
+    const endOfEventDay = new Date(`${event.dateString}T23:59:59.999`).getTime();
+    return Number.isFinite(endOfEventDay) && endOfEventDay >= referenceTime;
+  }
+
+  const timestamp = getEventTimestamp(event);
+  return !Number.isFinite(timestamp) || timestamp >= referenceTime;
+}
+
 export function formatEventDate(event: DiscoveryEvent) {
   const timestamp = getEventTimestamp(event);
   if (!Number.isFinite(timestamp)) return event.dateString || "Date coming soon";

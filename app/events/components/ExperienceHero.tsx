@@ -47,9 +47,12 @@ const categories = [
 const cities = [
   "All Cities",
   "New Orleans",
+  "New York",
   "Baton Rouge",
   "Houston",
   "Atlanta",
+  "Miami",
+  "Los Angeles",
   "Slidell",
   "Algiers",
 ];

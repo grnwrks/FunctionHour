@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import EventImage from "@/components/events/EventImage";
+import { formatEventDate } from "@/app/events/eventPresentation";
 
 export default function OrganizerProfilePage({
   params,
@@ -123,17 +124,17 @@ export default function OrganizerProfilePage({
                 </div>
               </div>
 
-              <div className="hidden lg:flex lg:flex-col lg:items-end">
+              {organizer.isVerifiedOrganizer && <div className="hidden lg:flex lg:flex-col lg:items-end">
                 <div className="rounded-3xl border border-white/10 bg-black/40 px-6 py-4 backdrop-blur-xl">
                   <p className="text-xs uppercase tracking-[0.3em] text-white/40">
                     Organizer Rank
                   </p>
 
                   <h2 className="mt-2 text-3xl font-black text-white">
-                    Elite
+                    Verified
                   </h2>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
 
@@ -280,12 +281,14 @@ export default function OrganizerProfilePage({
                   <div className="mt-5 flex flex-wrap gap-3 text-sm text-white/50">
                     <span>{event.location}</span>
                     <span>•</span>
-                    <span>{event.dateString}</span>
+                    <span>{formatEventDate(event)}</span>
                   </div>
 
                   <div className="mt-6 flex items-center justify-between">
                     <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-black">
-                      {event.price ? `$${event.price}` : "Free RSVP"}
+                      {(event.startingPrice ?? event.price)
+                        ? `From $${event.startingPrice ?? event.price}`
+                        : "Free RSVP"}
                     </div>
 
                     <div className="text-sm font-bold text-violet-200 transition group-hover:text-white">

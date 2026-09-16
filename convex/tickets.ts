@@ -8,6 +8,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { requireEventCapability } from "./eventAccess";
+import { requireEventSalesOpen } from "./eventDates";
 
 const CHECKOUT_RESERVATION_MS = 32 * 60 * 1000;
 
@@ -122,6 +123,8 @@ export const reserveTicketsForCheckout = mutation({
     if (!event) {
       throw new Error("Event not found.");
     }
+
+    requireEventSalesOpen(event);
 
     let ticketTypeName: string | undefined;
     let ticketTypeDescription: string | undefined;
@@ -328,6 +331,8 @@ export const createTicket = mutation({
     if (!event) {
       throw new Error("Event not found.");
     }
+
+    requireEventSalesOpen(event);
 
     const ticketId = await ctx.db.insert("tickets", {
       eventId: args.eventId,

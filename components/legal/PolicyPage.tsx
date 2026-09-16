@@ -40,7 +40,7 @@ export default function PolicyPage({
             {summary}
           </p>
           <p className="mt-5 text-sm text-zinc-500">
-            Effective August 3, 2026 · OutsideCrowd, LLC
+            Effective August 3, 2026 · Function Hour
           </p>
         </header>
 
@@ -58,7 +58,7 @@ export default function PolicyPage({
         <aside className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-6">
           <h2 className="font-bold text-white">Questions?</h2>
           <p className="mt-2 text-sm leading-6 text-zinc-300">
-            Contact OutsideCrowd, LLC at{" "}
+            Contact Function Hour at{" "}
             <a
               href="mailto:support@functionhour.com"
               className="font-semibold text-orange-400 hover:text-orange-300"

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { isEventUpcoming } from "./eventDates";
 
 async function getCurrentUserDoc(ctx: any) {
   const identity = await ctx.auth.getUserIdentity();
@@ -195,6 +196,30 @@ export const getOrganizerByUserId = query({
   },
 
   handler: async (ctx, args) => {
+    const rawEvents = await ctx.db
+      .query("events")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const events = await Promise.all(
+      rawEvents.filter((event) => isEventUpcoming(event)).map(async (event) => {
+        const ticketTypes = await ctx.db
+          .query("ticketTypes")
+          .withIndex("by_event", (q) => q.eq("eventId", event._id))
+          .take(100);
+        const activePrices = ticketTypes
+          .filter((ticketType) => ticketType.isActive !== false)
+          .map((ticketType) => ticketType.price);
+
+        return {
+          ...event,
+          startingPrice: activePrices.length
+            ? Math.min(...activePrices)
+            : (event.price ?? 0),
+        };
+      }),
+    );
+
     const organizer =
       (await ctx.db
         .query("users")
@@ -209,19 +234,20 @@ export const getOrganizerByUserId = query({
         )
         .first());
 
-    if (!organizer) {
-      return null;
-    }
-
-    const events = await ctx.db
-      .query("events")
-      .withIndex("by_userId", (q) =>
-        q.eq("userId", args.userId)
-      )
-      .collect();
+    if (!organizer && rawEvents.length === 0) return null;
 
     return {
-      organizer,
+      organizer: organizer ?? {
+        userId: args.userId,
+        organizerName: "Function Hour Organizer",
+        name: "Function Hour Organizer",
+        bio: "",
+        avatarUrl: "",
+        bannerUrl: "",
+        website: "",
+        instagram: "",
+        isVerifiedOrganizer: false,
+      },
       events,
     };
   },

@@ -19,18 +19,19 @@ export const metadata: Metadata = {
     shortcut: "/function-hour-mark.svg",
     apple: "/function-hour-mark.svg",
   },
-  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Function Hour",
     url: "https://functionhour.com",
     title: "Function Hour | Find Your Function",
     description: "Good events. Better hours. Find your next function.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Function Hour" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Function Hour | Find Your Function",
     description: "Good events. Better hours. Find your next function.",
+    images: ["/opengraph-image"],
   },
 };
 

@@ -5,15 +5,17 @@ type VenueRulesProps = {
   entryPolicy?: string;
   refundPolicy?: string;
   reEntry?: string;
+  isVerified?: boolean;
 };
 
 export default function VenueRules({
-  age = "21+",
-  dressCode = "Fashion-forward nightlife attire encouraged",
-  parking = "Street parking and nearby garages available",
-  entryPolicy = "Valid ID required for entry",
-  refundPolicy = "All sales final unless event is canceled",
-  reEntry = "Re-entry permitted before midnight",
+  age,
+  dressCode,
+  parking,
+  entryPolicy,
+  refundPolicy,
+  reEntry,
+  isVerified = false,
 }: VenueRulesProps) {
   const rules = [
     { label: "Age Requirement", value: age },
@@ -22,7 +24,9 @@ export default function VenueRules({
     { label: "Entry Policy", value: entryPolicy },
     { label: "Refunds", value: refundPolicy },
     { label: "Re-entry", value: reEntry },
-  ];
+  ].filter((rule): rule is { label: string; value: string } => Boolean(rule.value));
+
+  if (rules.length === 0) return null;
 
   return (
     <section className="oc-card relative overflow-hidden p-6 sm:p-8">
@@ -40,9 +44,9 @@ export default function VenueRules({
             </h2>
           </div>
 
-          <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white/70 backdrop-blur md:block">
+          {isVerified && <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-white/70 backdrop-blur md:block">
             Function Hour Verified Venue
-          </div>
+          </div>}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

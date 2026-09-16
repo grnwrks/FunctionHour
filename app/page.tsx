@@ -7,10 +7,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import OrganizerPortalLink from "@/components/OrganizerPortalLink";
+import Footer from "@/components/Footer";
 import ExperienceHero, { type QuickFilter } from "./events/components/ExperienceHero";
 import EventGrid from "./events/components/EventGrid";
 import TrendingCarousel from "./events/components/TrendingCarousel";
-import { discoveryScore, isThisWeekend, isTonight, type DiscoveryEvent } from "./events/eventPresentation";
+import { discoveryScore, isEventUpcoming, isThisWeekend, isTonight, type DiscoveryEvent } from "./events/eventPresentation";
 
 function matches(event: DiscoveryEvent, search: string, category: string, city: string) {
   const searchable = [event.name, event.description, event.category, event.location, event.venueName, event.venueAddress, event.city, event.state, event.dateString]
@@ -33,7 +34,8 @@ export default function HomePage() {
 
   const displayedEvents = useMemo(() => {
     const source = (view === "mine" ? myEvents ?? [] : events ?? []) as DiscoveryEvent[];
-    return source.filter((event) => matches(event, search, category, city))
+    return source.filter((event) => isEventUpcoming(event))
+      .filter((event) => matches(event, search, category, city))
       .filter((event) => quickFilter === "tonight" ? isTonight(event) : quickFilter === "weekend" ? isThisWeekend(event) : true)
       .sort((a, b) => discoveryScore(b) - discoveryScore(a));
   }, [category, city, events, myEvents, quickFilter, search, view]);
@@ -99,7 +101,7 @@ export default function HomePage() {
         <p className="mx-auto mt-3 max-w-xl text-zinc-400">Explore collections, hosts, the live map, and every Function Hour event.</p>
         <Link href="/events" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-gradient-to-r from-violet-500 to-orange-500 px-7 font-black">Open all events →</Link>
       </section>
-      <footer className="px-6 py-10 text-center text-sm text-zinc-500"><p className="font-black tracking-[0.25em] text-white">FUNCTION<span className="text-violet-500">HOUR</span></p><p className="mt-4">© 2026 Function Hour. All rights reserved.</p></footer>
+      <Footer />
     </main>
   );
 }
