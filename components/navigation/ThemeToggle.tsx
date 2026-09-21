@@ -28,7 +28,7 @@ export default function ThemeToggle() {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
     applyTheme(nextTheme);
-    window.localStorage.setItem("function-hour-theme", nextTheme);
+    window.localStorage.setItem("function-hour-theme-v2", nextTheme);
   }
 
   const nextLabel = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
