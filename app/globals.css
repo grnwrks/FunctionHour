@@ -136,8 +136,25 @@ html.light [class*="bg-zinc-950/"],
 html.light [class~="bg-zinc-900"],
 html.light [class*="bg-zinc-900/"],
 html.light [class*="bg-[#07060c]"],
-html.light [class*="bg-[#0d0d11]"] {
+html.light [class*="bg-[#080808]"],
+html.light [class*="bg-[#08070e]"],
+html.light [class*="bg-[#090812]"],
+html.light [class*="bg-[#0c0b14]"],
+html.light [class*="bg-[#0d0b16]"],
+html.light [class*="bg-[#0d0d11]"],
+html.light [class*="bg-[#111]"] {
   background-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+/* The organizer and event-detail shells use custom dark hex surfaces instead
+   of the shared Tailwind background tokens. Keep those surfaces in the same
+   light-mode system as the rest of the app. */
+html.light .page-shell,
+html.light .oc-card {
+  background-color: #ffffff !important;
+  color: #18181b !important;
+  border-color: rgba(39, 39, 42, 0.14) !important;
+  box-shadow: 0 18px 50px rgba(24, 24, 27, 0.08) !important;
 }
 
 html.light [class~="text-white"],
