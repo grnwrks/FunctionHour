@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* =========================
-   DESIGN TOKENS (DARK FIRST)
+   DESIGN TOKENS
    ========================= */
 @layer base {
   :root {
@@ -165,9 +165,41 @@ html.light [class*="bg-white/"] {
 }
 
 html.light .text-white[class*="bg-gradient"],
+html.light [class*="bg-gradient"] .text-white,
 html.light [class*="bg-violet-5"].text-white,
 html.light [class*="bg-orange-5"].text-white,
-html.light [class*="bg-fuchsia-5"].text-white {
+html.light [class*="bg-fuchsia-5"].text-white,
+html.light [class*="bg-red-5"].text-white,
+html.light [class*="bg-red-6"].text-white,
+html.light [class*="bg-blue-5"].text-white,
+html.light [class*="bg-blue-6"].text-white,
+html.light [class*="bg-amber-5"].text-white,
+html.light [class*="bg-emerald-5"].text-white,
+html.light [class*="bg-green-5"].text-white {
+  color: #ffffff !important;
+}
+
+/* Lucide icons use currentColor. Keep controls fully opaque in light mode and
+   preserve white icon/text contrast on saturated brand and status actions. */
+html.light :where(button, a, [role="button"]) svg {
+  opacity: 1;
+  visibility: visible;
+}
+
+html.light :where(
+  [class*="bg-gradient"],
+  [class*="bg-red-5"],
+  [class*="bg-red-6"],
+  [class*="bg-blue-5"],
+  [class*="bg-blue-6"],
+  [class*="bg-violet-5"],
+  [class*="bg-violet-6"],
+  [class*="bg-orange-5"],
+  [class*="bg-fuchsia-5"],
+  [class*="bg-amber-5"],
+  [class*="bg-emerald-5"],
+  [class*="bg-green-5"]
+) > svg {
   color: #ffffff !important;
 }
 

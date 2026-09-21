@@ -42,11 +42,11 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up">
-      <html lang="en" className="dark" suppressHydrationWarning>
+      <html lang="en" className="light" suppressHydrationWarning>
         <head>
           <script
             dangerouslySetInnerHTML={{
-              __html: `(function(){try{var t=localStorage.getItem('function-hour-theme');if(t!=='light'&&t!=='dark')t='dark';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t}catch(e){}})();`,
+              __html: `(function(){try{var t=localStorage.getItem('function-hour-theme');if(t!=='light'&&t!=='dark')t='light';var r=document.documentElement;r.classList.remove('light','dark');r.classList.add(t);r.dataset.theme=t;r.style.colorScheme=t}catch(e){}})();`,
             }}
           />
         </head>
