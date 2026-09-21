@@ -56,7 +56,7 @@ export default function HomePage() {
             <div className="hidden items-center gap-3 md:flex">
               <Link href="/events" className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:border-white">Events</Link>
               <Link href="/map" className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:border-white">Map</Link>
-              <Link href="/recommendations" className="rounded-full border border-orange-400/20 bg-orange-500/10 px-4 py-2 text-sm font-bold text-orange-100">AI picks</Link>
+              <Link href="/recommendations" className="rounded-full border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-950 transition-colors hover:bg-orange-100 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-100 dark:hover:bg-orange-500/20">AI picks</Link>
               <SignedIn>
                 <Link href="/saved-events" className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:border-white">Saved</Link>
                 <Link href="/my-tickets" className="rounded-full border border-zinc-700 px-4 py-2 text-sm hover:border-white">My Tickets</Link>
@@ -71,7 +71,7 @@ export default function HomePage() {
           <div className="flex gap-3 overflow-x-auto pb-1">
             <Link href="/events" className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">Events</Link>
             <Link href="/map" className="shrink-0 rounded-full border border-zinc-700 px-4 py-2 text-sm">Map</Link>
-            <Link href="/recommendations" className="shrink-0 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-2 text-sm text-orange-200">AI picks</Link>
+            <Link href="/recommendations" className="shrink-0 rounded-full border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-950 transition-colors hover:bg-orange-100 dark:border-orange-400/30 dark:bg-orange-500/10 dark:text-orange-200 dark:hover:bg-orange-500/20">AI picks</Link>
             <SignedIn><Link href="/saved-events" className="shrink-0 rounded-full border border-zinc-700 px-4 py-2 text-sm">Saved</Link><Link href="/my-tickets" className="shrink-0 rounded-full border border-zinc-700 px-4 py-2 text-sm">My Tickets</Link></SignedIn>
           </div>
         </div>

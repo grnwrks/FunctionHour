@@ -207,9 +207,9 @@ export default function EventCheckoutPage({
 
   if (event === undefined || ticketTypes === undefined || addOns === undefined) {
     return (
-      <main className="min-h-screen bg-black p-4 sm:p-6 text-white">
+      <main className="min-h-screen bg-zinc-50 p-4 text-zinc-900 dark:bg-black dark:text-white sm:p-6">
         Loading checkout...
-        <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-white/35 sm:px-6">
+        <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-zinc-500 dark:text-white/35 sm:px-6">
         Secure checkout powered by Function Hour
       </div>
       <div className="h-10 sm:hidden" />
@@ -219,9 +219,9 @@ export default function EventCheckoutPage({
 
   if (!event) {
     return (
-      <main className="min-h-screen bg-black p-4 sm:p-6 text-white">
+      <main className="min-h-screen bg-zinc-50 p-4 text-zinc-900 dark:bg-black dark:text-white sm:p-6">
         Event not found.
-        <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-white/35 sm:px-6">
+        <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-zinc-500 dark:text-white/35 sm:px-6">
         Secure checkout powered by Function Hour
       </div>
       <div className="h-10 sm:hidden" />
@@ -231,11 +231,11 @@ export default function EventCheckoutPage({
 
   if (!isEventUpcoming(event)) {
     return (
-      <main className="min-h-screen bg-black px-4 py-16 text-white">
-        <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center">
+      <main className="min-h-screen bg-zinc-50 px-4 py-16 text-zinc-900 dark:bg-black dark:text-white">
+        <div className="mx-auto max-w-xl rounded-3xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
           <h1 className="text-3xl font-black">Ticket sales have ended</h1>
-          <p className="mt-3 text-zinc-400">This event is no longer accepting ticket orders.</p>
-          <Link href={`/events/${eventId}`} className="mt-6 inline-flex rounded-2xl bg-white px-5 py-3 font-black text-black">
+          <p className="mt-3 text-zinc-600 dark:text-zinc-400">This event is no longer accepting ticket orders.</p>
+          <Link href={`/events/${eventId}`} className="mt-6 inline-flex rounded-2xl bg-zinc-900 px-5 py-3 font-black text-white dark:bg-white dark:text-black">
             Return to event
           </Link>
         </div>
@@ -244,7 +244,7 @@ export default function EventCheckoutPage({
   }
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-black text-white">
+    <main className="relative min-h-screen overflow-x-hidden bg-zinc-50 text-zinc-900 dark:bg-black dark:text-white">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute left-[-20%] top-[-10%] h-[420px] w-full lg:w-[420px] rounded-full bg-orange-500 shadow-lg shadow-orange-500/20 transition hover:scale-[1.01] hover:bg-orange-400/20 blur-[120px]" />
         <div className="absolute right-[-20%] top-[20%] h-[420px] w-full lg:w-[420px] rounded-full bg-violet-500/20 blur-[120px]" />
@@ -253,7 +253,7 @@ export default function EventCheckoutPage({
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <Link
           href={`/events/${event._id}`}
-          className="text-sm text-white/50 hover:text-white"
+          className="text-sm font-semibold text-zinc-600 transition hover:text-zinc-950 dark:text-white/50 dark:hover:text-white"
         >
           ← Back to event
         </Link>
@@ -265,12 +265,12 @@ export default function EventCheckoutPage({
                 Secure Checkout
               </p>
               <h1 className="mt-3 text-2xl sm:text-3xl sm:text-4xl font-black">{event.name}</h1>
-              <p className="mt-2 text-white/50">
+              <p className="mt-2 text-zinc-600 dark:text-white/50">
                 Choose your ticket experience and optional add-ons.
               </p>
             </div>
 
-            <section className="max-w-full rounded-[2rem] border border-white/10 bg-white/[0.04] p-4 sm:p-6">
+            <section className="max-w-full rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
               <h2 className="text-2xl font-black">Ticket Option</h2>
 
               <div className="mt-5 space-y-4">
@@ -304,15 +304,15 @@ export default function EventCheckoutPage({
                         onClick={() => setSelectedTicketTypeId(ticket._id)}
                         className={`w-full rounded-2xl border p-5 text-left transition ${
                           selected
-                            ? "border-orange-400 bg-orange-500 shadow-lg shadow-orange-500/20 transition hover:scale-[1.01] hover:bg-orange-400/10"
-                            : "border-white/10 bg-black hover:border-white/30"
+                            ? "border-orange-400 bg-orange-100 text-orange-950 shadow-lg shadow-orange-500/10 hover:bg-orange-200 dark:bg-orange-500 dark:text-white dark:shadow-orange-500/20 dark:hover:bg-orange-400/20"
+                            : "border-zinc-200 bg-zinc-50 text-zinc-900 hover:border-zinc-400 dark:border-white/10 dark:bg-black dark:text-white dark:hover:border-white/30"
                         } ${soldOut ? "cursor-not-allowed opacity-50" : ""}`}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <p className="font-black">{ticket.name}</p>
                             {ticket.description && (
-                              <p className="mt-1 text-sm text-white/50">
+                              <p className="mt-1 text-sm text-zinc-600 dark:text-white/50">
                                 {ticket.description}
                               </p>
                             )}
@@ -327,7 +327,7 @@ export default function EventCheckoutPage({
             </section>
 
             {activeAddOns.length > 0 && (
-              <section className="max-w-full rounded-[2rem] border border-white/10 bg-white/[0.04] p-4 sm:p-6">
+              <section className="max-w-full rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
                 <h2 className="text-2xl font-black">Add-ons</h2>
 
                 <div className="mt-5 space-y-4">
@@ -342,8 +342,8 @@ export default function EventCheckoutPage({
                         onClick={() => toggleAddOn(addOn._id)}
                         className={`w-full rounded-2xl border p-5 text-left transition ${
                           selected
-                            ? "border-orange-400 bg-orange-500 shadow-lg shadow-orange-500/20 transition hover:scale-[1.01] hover:bg-orange-400/10"
-                            : "border-white/10 bg-black hover:border-white/30"
+                            ? "border-orange-400 bg-orange-100 text-orange-950 shadow-lg shadow-orange-500/10 hover:bg-orange-200 dark:bg-orange-500 dark:text-white dark:shadow-orange-500/20 dark:hover:bg-orange-400/20"
+                            : "border-zinc-200 bg-zinc-50 text-zinc-900 hover:border-zinc-400 dark:border-white/10 dark:bg-black dark:text-white dark:hover:border-white/30"
                         } ${addOn.isSoldOut ? "cursor-not-allowed opacity-50" : ""}`}
                       >
                         <div className="flex items-start justify-between gap-4">
@@ -353,7 +353,7 @@ export default function EventCheckoutPage({
                               {addOn.isRequired ? " · Required" : ""}
                             </p>
                             {addOn.description && (
-                              <p className="mt-1 text-sm text-white/50">
+                              <p className="mt-1 text-sm text-zinc-600 dark:text-white/50">
                                 {addOn.description}
                               </p>
                             )}
@@ -368,31 +368,31 @@ export default function EventCheckoutPage({
             )}
           </div>
 
-          <aside className="h-fit rounded-[2rem] border border-white/10 bg-white/[0.04] p-4 sm:p-6">
-            <p className="text-sm uppercase tracking-[0.3em] text-white/40">
+          <aside className="h-fit rounded-[2rem] border border-zinc-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-zinc-500 dark:text-white/40">
               Order Summary
             </p>
 
             <div className="mt-5 space-y-4">
               <div className="flex justify-between gap-4 text-sm">
-                <span className="text-white/50">
+                <span className="text-zinc-600 dark:text-white/50">
                   {selectedTicketType?.name || "Standard Admission"} × {quantity}
                 </span>
                 <span>${(Number(basePrice) * quantity).toFixed(2)}</span>
               </div>
 
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/35 p-3">
+              <div className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-white/10 dark:bg-black/35">
                 <div>
                   <p className="text-sm font-black">Ticket quantity</p>
-                  <p className="mt-1 text-xs text-white/45">Up to {maxQuantity} per order</p>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-white/45">Up to {maxQuantity} per order</p>
                 </div>
-                <div className="flex items-center overflow-hidden rounded-full border border-white/15 bg-black">
+                <div className="flex items-center overflow-hidden rounded-full border border-zinc-300 bg-white dark:border-white/15 dark:bg-black">
                   <button
                     type="button"
                     aria-label="Remove one ticket"
                     onClick={() => setQuantity((current) => Math.max(1, current - 1))}
                     disabled={quantity <= 1}
-                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-white/10 disabled:opacity-30"
+                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-zinc-100 disabled:opacity-30 dark:hover:bg-white/10"
                   >
                     −
                   </button>
@@ -402,7 +402,7 @@ export default function EventCheckoutPage({
                     aria-label="Add one ticket"
                     onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
                     disabled={quantity >= maxQuantity}
-                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-white/10 disabled:opacity-30"
+                    className="grid h-11 w-11 place-items-center text-xl font-black hover:bg-zinc-100 disabled:opacity-30 dark:hover:bg-white/10"
                   >
                     +
                   </button>
@@ -411,16 +411,16 @@ export default function EventCheckoutPage({
 
               {selectedAddOns.map((addOn) => (
                 <div key={addOn._id} className="flex justify-between gap-4 text-sm">
-                  <span className="text-white/50">{addOn.name}</span>
+                  <span className="text-zinc-600 dark:text-white/50">{addOn.name}</span>
                   <span>${addOn.price}</span>
                 </div>
               ))}
 
-              <div className="border-t border-white/10 pt-4">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40" htmlFor="promo-code">Promo code</label>
+              <div className="border-t border-zinc-200 pt-4 dark:border-white/10">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 dark:text-white/40" htmlFor="promo-code">Promo code</label>
                 <div className="mt-2 flex gap-2">
-                  <input id="promo-code" value={promoCode} onChange={(event) => { setPromoCode(event.target.value.toUpperCase().replace(/\s/g, "")); setPromoToValidate(""); }} placeholder="ENTER CODE" className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/40 px-3 text-sm font-black uppercase outline-none focus:border-orange-400/50" />
-                  <button type="button" onClick={() => setPromoToValidate(promoCode)} disabled={!promoCode} className="rounded-xl border border-white/10 px-3 text-xs font-black disabled:opacity-40">Apply</button>
+                  <input id="promo-code" value={promoCode} onChange={(event) => { setPromoCode(event.target.value.toUpperCase().replace(/\s/g, "")); setPromoToValidate(""); }} placeholder="ENTER CODE" className="min-h-11 min-w-0 flex-1 rounded-xl border border-zinc-300 bg-white px-3 text-sm font-black uppercase text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-orange-400 dark:border-white/10 dark:bg-black/40 dark:text-white dark:placeholder:text-white/40" />
+                  <button type="button" onClick={() => setPromoToValidate(promoCode)} disabled={!promoCode} className="rounded-xl border border-zinc-300 bg-white px-3 text-xs font-black hover:bg-zinc-100 disabled:opacity-40 dark:border-white/10 dark:bg-transparent dark:hover:bg-white/10">Apply</button>
                 </div>
                 {promoToValidate && discount === undefined && <p className="mt-2 text-xs text-zinc-500">Checking code…</p>}
                 {discount && <p className={`mt-2 text-xs ${discount.valid ? "text-emerald-400" : "text-red-300"}`}>{discount.message}</p>}
@@ -433,7 +433,7 @@ export default function EventCheckoutPage({
                 </div>
               )}
 
-              <div className="border-t border-white/10 pt-4">
+              <div className="border-t border-zinc-200 pt-4 dark:border-white/10">
                 <div className="flex justify-between text-xl font-black">
                   <span>Total</span>
                   <span>${Math.max(0, total - appliedDiscountAmount).toFixed(2)}</span>
@@ -456,7 +456,7 @@ export default function EventCheckoutPage({
                       Sign in to Checkout
                     </button>
                   </SignInButton>
-                  <p className="mt-3 text-center text-[10px] leading-4 text-white/40">
+                  <p className="mt-3 text-center text-[10px] leading-4 text-zinc-500 dark:text-white/40">
                     Your account keeps tickets, entry details, and event updates together.
                   </p>
                 </div>
@@ -475,7 +475,7 @@ export default function EventCheckoutPage({
                       value={buyerName}
                       onChange={(e) => setBuyerName(e.target.value)}
                       placeholder="Full Name"
-                      className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/40"
+                      className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-orange-400 dark:border-white/10 dark:bg-black/40 dark:text-white dark:placeholder:text-white/40"
                     />
 
                     <input
@@ -484,7 +484,7 @@ export default function EventCheckoutPage({
                       onChange={(e) => setBuyerEmail(e.target.value)}
                       placeholder="Email Address"
                       required
-                      className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white placeholder:text-white/40"
+                      className="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-orange-400 dark:border-white/10 dark:bg-black/40 dark:text-white dark:placeholder:text-white/40"
                     />
                   </div>
 
@@ -502,14 +502,14 @@ export default function EventCheckoutPage({
             </div>
 
             {message && (
-              <p className="mt-4 rounded-2xl border border-white/10 bg-black p-4 text-sm text-white/70">
+              <p className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-white/10 dark:bg-black dark:text-white/70">
                 {message}
               </p>
             )}
           </aside>
         </div>
       </section>
-      <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-white/35 sm:px-6">
+      <div className="mx-auto mt-6 max-w-6xl px-4 text-center text-[11px] uppercase tracking-[0.3em] text-zinc-500 dark:text-white/35 sm:px-6">
         Secure checkout powered by Function Hour
       </div>
       <div className="h-10 sm:hidden" />
