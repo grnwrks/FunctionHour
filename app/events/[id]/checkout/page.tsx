@@ -193,7 +193,11 @@ export default function EventCheckoutPage({
       const data = await response.json();
 
       if (!response.ok || !data.url) {
-        throw new Error(data.error || "Unable to start checkout.");
+        const diagnostic =
+          typeof data.diagnostic === "string" ? `\n${data.diagnostic}` : "";
+        throw new Error(
+          `${data.error || "Unable to start checkout."}${diagnostic}`,
+        );
       }
 
       window.location.href = data.url;
@@ -502,7 +506,7 @@ export default function EventCheckoutPage({
             </div>
 
             {message && (
-              <p className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-white/10 dark:bg-black dark:text-white/70">
+              <p className="mt-4 whitespace-pre-line rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-white/10 dark:bg-black dark:text-white/70">
                 {message}
               </p>
             )}
