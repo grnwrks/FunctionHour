@@ -4,11 +4,28 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getConvexClient } from "@/lib/convex";
 import { getStripeClient } from "@/lib/stripe/server";
+import Stripe from "stripe";
 
 type CheckoutTicketRequest = {
   ticketTypeId?: string;
   quantity?: number;
 };
+
+async function releaseReservationSafely(
+  reservationId: string,
+  checkoutSecret: string,
+) {
+  try {
+    await getConvexClient().mutation(api.tickets.releaseCheckoutReservation, {
+      checkoutSecret,
+      reservationId,
+    });
+  } catch (releaseError) {
+    // Preserve the original checkout error. The scheduled Convex cleanup remains
+    // a backstop if an immediate release cannot be completed.
+    console.error("Ticket checkout reservation release error:", releaseError);
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -89,10 +106,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ url: existingSession.url });
       }
 
-      await convex.mutation(api.tickets.releaseCheckoutReservation, {
+      await releaseReservationSafely(
+        reservation.reservationId,
         checkoutSecret,
-        reservationId: reservation.reservationId,
-      });
+      );
 
       return NextResponse.json(
         { error: "Your previous checkout expired. Please try again." },
@@ -113,10 +130,7 @@ export async function POST(req: Request) {
       : null;
 
     if (discount && !discount.valid) {
-      await convex.mutation(api.tickets.releaseCheckoutReservation, {
-        checkoutSecret,
-        reservationId: activeReservationId,
-      });
+      await releaseReservationSafely(activeReservationId, checkoutSecret);
       return NextResponse.json({ error: discount.message }, { status: 400 });
     }
 
@@ -183,10 +197,7 @@ export async function POST(req: Request) {
         cancel_url: cancelUrl,
       });
     } catch (error) {
-      await convex.mutation(api.tickets.releaseCheckoutReservation, {
-        checkoutSecret,
-        reservationId: activeReservationId,
-      });
+      await releaseReservationSafely(activeReservationId, checkoutSecret);
       throw error;
     }
 
@@ -202,14 +213,43 @@ export async function POST(req: Request) {
 
     const message = error instanceof Error ? error.message : "";
     const salesEnded = message.includes("Ticket sales have ended");
+    const unavailable = [
+      "Event not found",
+      "Ticket type not found",
+      "not currently available",
+      "not enough tickets remaining",
+      "checkout in progress",
+      "checkout is already being prepared",
+      "previous checkout expired",
+    ].some((knownMessage) => message.includes(knownMessage));
+    const configurationError =
+      message.includes("Unauthorized checkout request") ||
+      message.includes("STRIPE_SECRET_KEY") ||
+      message.includes("NEXT_PUBLIC_CONVEX_URL");
+    const stripeError = error instanceof Stripe.errors.StripeError;
+
+    let publicMessage = "Unable to create ticket checkout session.";
+    let status = 500;
+
+    if (salesEnded) {
+      publicMessage = "Ticket sales have ended for this event.";
+      status = 409;
+    } else if (unavailable) {
+      publicMessage = message;
+      status = 409;
+    } else if (stripeError) {
+      publicMessage =
+        "The payment provider could not start checkout. Please try again.";
+      status = 502;
+    } else if (configurationError) {
+      publicMessage =
+        "Ticket checkout is temporarily unavailable. Please contact support.";
+      status = 503;
+    }
 
     return NextResponse.json(
-      {
-        error: salesEnded
-          ? "Ticket sales have ended for this event."
-          : "Unable to create ticket checkout session.",
-      },
-      { status: salesEnded ? 409 : 500 }
+      { error: publicMessage },
+      { status }
     );
   }
 }
