@@ -4,12 +4,91 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getConvexClient } from "@/lib/convex";
 import { getStripeClient } from "@/lib/stripe/server";
+import { createHash } from "node:crypto";
 import Stripe from "stripe";
 
 type CheckoutTicketRequest = {
   ticketTypeId?: string;
   quantity?: number;
 };
+
+function redactCheckoutErrorMessage(message: string): string {
+  return message
+    .replace(/(?:sk|rk)_(?:live|test)_[A-Za-z0-9]+/g, "[REDACTED_STRIPE_KEY]")
+    .replace(/whsec_[A-Za-z0-9]+/g, "[REDACTED_WEBHOOK_SECRET]")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]");
+}
+
+function getStripeKeyProfile() {
+  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
+
+  if (!stripeKey) {
+    return {
+      configured: false,
+      mode: "missing",
+      fingerprint: null,
+      length: 0,
+    };
+  }
+
+  const mode = stripeKey.startsWith("sk_live_")
+    ? "live"
+    : stripeKey.startsWith("sk_test_")
+      ? "test"
+      : stripeKey.startsWith("rk_live_") || stripeKey.startsWith("rk_test_")
+        ? "restricted"
+        : "unknown";
+
+  return {
+    configured: true,
+    mode,
+    fingerprint: createHash("sha256").update(stripeKey).digest("hex").slice(0, 12),
+    length: stripeKey.length,
+  };
+}
+
+function logCheckoutDiagnostic(
+  diagnosticId: string,
+  checkoutStage: string,
+  error: unknown,
+) {
+  const stripeError = error instanceof Stripe.errors.StripeError;
+
+  const diagnostic = {
+    diagnosticId,
+    route: "/api/stripe/ticket-checkout",
+    stage: checkoutStage,
+    timestamp: new Date().toISOString(),
+    error: {
+      name: error instanceof Error ? error.name : typeof error,
+      message:
+        error instanceof Error
+          ? redactCheckoutErrorMessage(error.message)
+          : "Non-Error value thrown",
+      stripe: stripeError
+        ? {
+            type: error.type,
+            code: error.code ?? null,
+            statusCode: error.statusCode ?? null,
+            requestId: error.requestId ?? null,
+            param: error.param ?? null,
+            declineCode: error.decline_code ?? null,
+            docUrl: error.doc_url ?? null,
+          }
+        : null,
+    },
+    stripeConfiguration: getStripeKeyProfile(),
+    deployment: {
+      vercelEnvironment: process.env.VERCEL_ENV ?? null,
+      gitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+      nodeEnvironment: process.env.NODE_ENV ?? null,
+    },
+  };
+
+  // Intentionally server-only. Never include raw errors, credentials, buyer
+  // details, or payment data in this diagnostic.
+  console.error("Ticket checkout diagnostic:", JSON.stringify(diagnostic));
+}
 
 async function releaseReservationSafely(
   reservationId: string,
@@ -29,6 +108,7 @@ async function releaseReservationSafely(
 
 export async function POST(req: Request) {
   let checkoutStage = "request-validation";
+  const diagnosticId = crypto.randomUUID();
 
   try {
     const body = await req.json();
@@ -218,7 +298,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error("Ticket checkout error:", error);
+    logCheckoutDiagnostic(diagnosticId, checkoutStage, error);
 
     const message = error instanceof Error ? error.message : "";
     const salesEnded = message.includes("Ticket sales have ended");
@@ -261,7 +341,12 @@ export async function POST(req: Request) {
         error: publicMessage,
         diagnostic: `Temporary checkout diagnostic: ${checkoutStage}`,
       },
-      { status }
+      {
+        status,
+        headers: {
+          "X-Checkout-Diagnostic-Id": diagnosticId,
+        },
+      }
     );
   }
 }
