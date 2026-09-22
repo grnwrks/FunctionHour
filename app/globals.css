@@ -157,6 +157,54 @@ html.light .oc-card {
   box-shadow: 0 18px 50px rgba(24, 24, 27, 0.08) !important;
 }
 
+/* Organizer OS uses a wider set of custom near-black cards and gradients than
+   the public experience. Normalize those surfaces together so light mode never
+   combines a dark card with text that has already switched to a dark color. */
+html.light .organizer-shell [class*="bg-[#0d0b13]"],
+html.light .organizer-shell [class*="bg-[#0e0d17]"],
+html.light .organizer-shell [class*="bg-[#111111]"],
+html.light .organizer-shell [class*="bg-[#171717]"],
+html.light .organizer-shell [class*="bg-[#181818]"],
+html.light .organizer-shell [class*="bg-[#1b1b1b]"],
+html.light .organizer-shell [class*="bg-[#202020]"] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  color: #18181b !important;
+}
+
+html.light .organizer-shell [class*="from-[#0b0914]"],
+html.light .organizer-shell [class*="from-[#0b0a12]"],
+html.light .organizer-shell [class*="from-[#171128]"] {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  background-image: none !important;
+  color: #18181b !important;
+}
+
+html.light .organizer-shell [class*="text-violet-1"],
+html.light .organizer-shell [class*="text-violet-2"],
+html.light .organizer-shell [class*="text-violet-3"] {
+  color: #6d28d9 !important;
+}
+
+html.light .organizer-shell [class*="text-orange-1"],
+html.light .organizer-shell [class*="text-orange-2"],
+html.light .organizer-shell [class*="text-orange-3"],
+html.light .organizer-shell [class*="text-orange-50"] {
+  color: #9a3412 !important;
+}
+
+html.light .organizer-shell [class*="text-amber-1"],
+html.light .organizer-shell [class*="text-amber-2"],
+html.light .organizer-shell [class*="text-amber-3"] {
+  color: #92400e !important;
+}
+
+html.light .organizer-shell [class*="text-emerald-1"],
+html.light .organizer-shell [class*="text-emerald-2"],
+html.light .organizer-shell [class*="text-emerald-3"],
+html.light .organizer-shell [class*="text-emerald-4"] {
+  color: #047857 !important;
+}
+
 html.light [class~="text-white"],
 html.light [class*="text-white/"] {
   color: #18181b !important;

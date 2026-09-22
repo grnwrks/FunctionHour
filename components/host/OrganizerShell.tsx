@@ -305,7 +305,7 @@ export default function OrganizerShell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#07060c] text-white">
+    <div className="organizer-shell min-h-screen bg-[#07060c] text-white">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute left-[10%] top-[-15%] h-[520px] w-[520px] rounded-full bg-violet-700/10 blur-[160px]" />
 
