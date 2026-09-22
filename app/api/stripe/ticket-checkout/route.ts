@@ -28,6 +28,8 @@ async function releaseReservationSafely(
 }
 
 export async function POST(req: Request) {
+  let checkoutStage = "request-validation";
+
   try {
     const body = await req.json();
 
@@ -46,6 +48,7 @@ export async function POST(req: Request) {
       );
     }
 
+    checkoutStage = "authentication";
     const user = await currentUser();
     const buyerEmail = user?.primaryEmailAddress?.emailAddress
       .trim()
@@ -68,6 +71,7 @@ export async function POST(req: Request) {
       );
     }
 
+    checkoutStage = "configuration";
     const convex = getConvexClient();
     const buyerName =
       user.fullName?.trim() ||
@@ -81,6 +85,7 @@ export async function POST(req: Request) {
       );
     }
 
+    checkoutStage = "ticket-reservation";
     const reservationId = crypto.randomUUID();
     const reservation = await convex.mutation(
       api.tickets.reserveTicketsForCheckout,
@@ -98,6 +103,7 @@ export async function POST(req: Request) {
     );
 
     if (reservation.stripeCheckoutSessionId) {
+      checkoutStage = "existing-stripe-session";
       const existingSession = await getStripeClient().checkout.sessions.retrieve(
         reservation.stripeCheckoutSessionId
       );
@@ -119,6 +125,7 @@ export async function POST(req: Request) {
 
     const activeReservationId = reservation.reservationId;
     const ticketSubtotal = reservation.unitPrice * quantity;
+    checkoutStage = "discount-validation";
     const discount = promoCode
       ? await convex.query(api.discountCodes.validate, {
           eventId: eventId as Id<"events">,
@@ -172,6 +179,7 @@ export async function POST(req: Request) {
       "cancelled"
     );
 
+    checkoutStage = "stripe-session-creation";
     let session;
     try {
       session = await getStripeClient().checkout.sessions.create({
@@ -201,6 +209,7 @@ export async function POST(req: Request) {
       throw error;
     }
 
+    checkoutStage = "checkout-finalization";
     await convex.mutation(api.tickets.attachCheckoutSession, {
       checkoutSecret,
       reservationId: activeReservationId,
@@ -248,7 +257,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { error: publicMessage },
+      {
+        error: publicMessage,
+        diagnostic: `Temporary checkout diagnostic: ${checkoutStage}`,
+      },
       { status }
     );
   }
