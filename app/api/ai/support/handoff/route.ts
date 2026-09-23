@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { checkRateLimit, getClientKey } from "@/lib/supportRateLimit";
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -79,6 +80,23 @@ const responseFormat = {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    const rateLimit = checkRateLimit(
+      "support-handoff",
+      getClientKey(request, session.userId),
+      { limit: 6, windowMs: 60_000 },
+    );
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many support-summary requests. Try again shortly." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const parsed = requestSchema.safeParse(await request.json());
 
     if (!parsed.success) {
@@ -88,7 +106,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const session = await auth();
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
