@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { checkRateLimit, getClientKey } from "@/lib/supportRateLimit";
+import { recordFeedback, recordRateLimit } from "@/lib/supportObservability";
 
 const feedbackSchema = z.object({
   helpful: z.boolean(),
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
     );
 
     if (!rateLimit.allowed) {
+      recordRateLimit();
       return NextResponse.json(
         { error: "Too many feedback requests. Try again shortly." },
         {
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid feedback." }, { status: 400 });
     }
 
+    recordFeedback(parsed.data.helpful);
     console.info("Function Hour support feedback", {
       helpful: parsed.data.helpful,
       currentPath: parsed.data.currentPath,
