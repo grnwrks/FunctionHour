@@ -1,18 +1,43 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Loader2, MessageCircle, Send, X } from "lucide-react";
+import {
+  Bot,
+  CalendarDays,
+  Loader2,
+  MapPin,
+  MessageCircle,
+  Send,
+  Ticket,
+  X,
+} from "lucide-react";
+
+type EventResult = {
+  id: string;
+  name: string;
+  dateString?: string;
+  eventDate: number;
+  venueName?: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  startingPrice: number;
+  url: string;
+};
 
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+  events?: EventResult[];
 };
 
 type SupportResponse = {
   answer: string;
   suggestedPrompts: string[];
   escalationRecommended: boolean;
+  events: EventResult[];
 };
 
 const initialMessage: ChatMessage = {
@@ -26,6 +51,31 @@ const defaultPrompts = [
   "Where are my tickets?",
   "How do refunds work?",
 ];
+
+function formatEventDate(event: EventResult) {
+  if (event.dateString?.trim()) return event.dateString;
+
+  const date = new Date(event.eventDate);
+  if (!Number.isFinite(date.getTime())) return "Date available on event page";
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatLocation(event: EventResult) {
+  const cityState = [event.city, event.state].filter(Boolean).join(", ");
+  return event.venueName || cityState || event.location || "See event page";
+}
+
+function formatPrice(price: number) {
+  if (!Number.isFinite(price) || price <= 0) return "See pricing";
+  return `From $${price.toFixed(price % 1 === 0 ? 0 : 2)}`;
+}
 
 export default function SupportChat() {
   const pathname = usePathname();
@@ -44,7 +94,11 @@ export default function SupportChat() {
   }, [messages, open, loading]);
 
   const historyForApi = useMemo(
-    () => messages.filter((message) => message !== initialMessage).slice(-11),
+    () =>
+      messages
+        .filter((message) => message !== initialMessage)
+        .map(({ role, content }) => ({ role, content }))
+        .slice(-11),
     [messages],
   );
 
@@ -53,7 +107,10 @@ export default function SupportChat() {
     if (!text || loading) return;
 
     const userMessage: ChatMessage = { role: "user", content: text };
-    const nextHistory = [...historyForApi, userMessage].slice(-12);
+    const nextHistory = [
+      ...historyForApi,
+      { role: userMessage.role, content: userMessage.content },
+    ].slice(-12);
 
     setMessages((current) => [...current, userMessage]);
     setInput("");
@@ -85,7 +142,11 @@ export default function SupportChat() {
 
       setMessages((current) => [
         ...current,
-        { role: "assistant", content: payload.answer },
+        {
+          role: "assistant",
+          content: payload.answer,
+          events: payload.events,
+        },
       ]);
       setSuggestedPrompts(payload.suggestedPrompts);
       setEscalationRecommended(payload.escalationRecommended);
@@ -148,21 +209,53 @@ export default function SupportChat() {
             aria-live="polite"
           >
             {messages.map((message, index) => (
-              <div
-                key={`${message.role}-${index}`}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+              <div key={`${message.role}-${index}`} className="space-y-2">
                 <div
-                  className={`max-w-[86%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${
-                    message.role === "user"
-                      ? "bg-black text-white dark:bg-white dark:text-black"
-                      : "bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  {message.content}
+                  <div
+                    className={`max-w-[86%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${
+                      message.role === "user"
+                        ? "bg-black text-white dark:bg-white dark:text-black"
+                        : "bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
+                    }`}
+                  >
+                    {message.content}
+                  </div>
                 </div>
+
+                {message.events?.length ? (
+                  <div className="space-y-2">
+                    {message.events.map((event) => (
+                      <Link
+                        key={event.id}
+                        href={event.url}
+                        className="block rounded-2xl border border-black/10 bg-white p-3 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
+                        onClick={() => setOpen(false)}
+                      >
+                        <p className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-white">
+                          {event.name}
+                        </p>
+                        <div className="mt-2 space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="flex items-center gap-1.5">
+                            <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>{formatEventDate(event)}</span>
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span className="line-clamp-1">{formatLocation(event)}</span>
+                          </p>
+                          <p className="flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-200">
+                            <Ticket className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>{formatPrice(event.startingPrice)}</span>
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
 
@@ -219,7 +312,7 @@ export default function SupportChat() {
                   event.currentTarget.form?.requestSubmit();
                 }
               }}
-              placeholder="Ask about events, tickets, refunds…"
+              placeholder="Try: R&B in Dallas Saturday under $40"
               className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl border border-black/10 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:focus:border-zinc-600"
               maxLength={2000}
             />
