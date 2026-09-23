@@ -13,6 +13,8 @@ import {
   MapPin,
   MessageCircle,
   Send,
+  ThumbsDown,
+  ThumbsUp,
   Ticket,
   X,
 } from "lucide-react";
@@ -66,7 +68,6 @@ const defaultPrompts = [
 
 function formatEventDate(event: EventResult) {
   if (event.dateString?.trim()) return event.dateString;
-
   const date = new Date(event.eventDate);
   if (!Number.isFinite(date.getTime())) return "Date available on event page";
 
@@ -106,13 +107,13 @@ export default function SupportChat() {
   const [handoff, setHandoff] = useState<SupportHandoff | null>(null);
   const [handoffLoading, setHandoffLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean | null>(null);
+  const [latestHadEventResults, setLatestHadEventResults] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (open) {
-      endRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, open, loading, handoff]);
+    if (open) endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, open, loading, handoff, feedbackSubmitted]);
 
   const historyForApi = useMemo(
     () =>
@@ -140,9 +141,11 @@ export default function SupportChat() {
     setEscalationRecommended(false);
     setHandoff(null);
     setCopied(false);
+    setFeedbackSubmitted(null);
+    setLatestHadEventResults(false);
 
     try {
-      const response = await fetch("/api/ai/support", {
+      const response = await fetch("/api/ai/support/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,10 +153,7 @@ export default function SupportChat() {
           currentPath: pathname || "/",
         }),
       });
-
-      const payload = (await response.json()) as
-        | SupportResponse
-        | { error?: string };
+      const payload = (await response.json()) as SupportResponse | { error?: string };
 
       if (!response.ok || !("answer" in payload)) {
         throw new Error(
@@ -165,20 +165,16 @@ export default function SupportChat() {
 
       setMessages((current) => [
         ...current,
-        {
-          role: "assistant",
-          content: payload.answer,
-          events: payload.events,
-        },
+        { role: "assistant", content: payload.answer, events: payload.events },
       ]);
       setSuggestedPrompts(payload.suggestedPrompts);
       setEscalationRecommended(payload.escalationRecommended);
+      setLatestHadEventResults(payload.events.length > 0);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Function Hour Help is unavailable right now.";
-
       setMessages((current) => [
         ...current,
         {
@@ -191,9 +187,28 @@ export default function SupportChat() {
     }
   }
 
+  async function submitFeedback(helpful: boolean) {
+    if (feedbackSubmitted !== null) return;
+    setFeedbackSubmitted(helpful);
+
+    try {
+      await fetch("/api/ai/support/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          helpful,
+          currentPath: pathname || "/",
+          hadEventResults: latestHadEventResults,
+          escalationRecommended,
+        }),
+      });
+    } catch {
+      // Feedback is intentionally best-effort and should never interrupt support.
+    }
+  }
+
   async function prepareHandoff() {
     if (handoffLoading || historyForApi.length === 0) return;
-
     setHandoffLoading(true);
     setCopied(false);
 
@@ -215,7 +230,6 @@ export default function SupportChat() {
             : "Unable to prepare support summary.",
         );
       }
-
       setHandoff(payload);
     } catch (error) {
       const message =
@@ -231,7 +245,6 @@ export default function SupportChat() {
 
   async function copyHandoff() {
     if (!handoff) return;
-
     try {
       await navigator.clipboard.writeText(handoff.handoffText);
       setCopied(true);
@@ -246,6 +259,10 @@ export default function SupportChat() {
     void sendMessage(input);
   }
 
+  const hasAnswered = messages.some(
+    (message, index) => index > 0 && message.role === "assistant",
+  );
+
   return (
     <div className="fixed bottom-5 right-5 z-[70] sm:bottom-6 sm:right-6">
       {open ? (
@@ -259,12 +276,8 @@ export default function SupportChat() {
                 <Bot className="h-5 w-5" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-zinc-950 dark:text-white">
-                  Function Hour Help
-                </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Support + event discovery
-                </p>
+                <p className="text-sm font-semibold text-zinc-950 dark:text-white">Function Hour Help</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Support + event discovery</p>
               </div>
             </div>
             <button
@@ -277,17 +290,10 @@ export default function SupportChat() {
             </button>
           </header>
 
-          <div
-            className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
-            aria-live="polite"
-          >
+          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
             {messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className="space-y-2">
-                <div
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
+                <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[86%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-6 ${
                       message.role === "user"
@@ -309,13 +315,10 @@ export default function SupportChat() {
                         onClick={() => setOpen(false)}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <p className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-white">
-                            {event.name}
-                          </p>
+                          <p className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-white">{event.name}</p>
                           {event.saved ? (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-medium text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
-                              <Bookmark className="h-3 w-3" aria-hidden="true" />
-                              Saved
+                              <Bookmark className="h-3 w-3" aria-hidden="true" /> Saved
                             </span>
                           ) : null}
                         </div>
@@ -343,17 +346,40 @@ export default function SupportChat() {
             {loading ? (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl bg-zinc-100 px-3.5 py-2.5 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-300">
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  Checking Function Hour…
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Checking Function Hour…
                 </div>
+              </div>
+            ) : null}
+
+            {hasAnswered && !loading ? (
+              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                <span>{feedbackSubmitted === null ? "Was this helpful?" : "Thanks for the feedback."}</span>
+                {feedbackSubmitted === null ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void submitFeedback(true)}
+                      className="rounded-full p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      aria-label="Mark response helpful"
+                    >
+                      <ThumbsUp className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void submitFeedback(false)}
+                      className="rounded-full p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      aria-label="Mark response not helpful"
+                    >
+                      <ThumbsDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </>
+                ) : null}
               </div>
             ) : null}
 
             {escalationRecommended ? (
               <div className="space-y-3 rounded-2xl border border-amber-300/70 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
-                <p>
-                  This looks like an issue that may need manual review. I can prepare a concise summary so you do not have to repeat the conversation.
-                </p>
+                <p>This looks like an issue that may need manual review. I can prepare a concise summary so you do not have to repeat the conversation.</p>
                 {!handoff ? (
                   <button
                     type="button"
@@ -361,24 +387,18 @@ export default function SupportChat() {
                     disabled={handoffLoading}
                     className="inline-flex items-center gap-2 rounded-full bg-amber-950 px-3 py-1.5 font-semibold text-white disabled:opacity-60 dark:bg-amber-100 dark:text-amber-950"
                   >
-                    {handoffLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                    ) : null}
+                    {handoffLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
                     Prepare support summary
                   </button>
                 ) : (
                   <div className="space-y-2 rounded-xl bg-white/70 p-3 text-zinc-800 dark:bg-black/20 dark:text-zinc-100">
                     <div className="flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                      <span>{handoff.category.replaceAll("_", " ")}</span>
-                      <span>•</span>
-                      <span>{formatDestination(handoff.destination)}</span>
+                      <span>{handoff.category.replaceAll("_", " ")}</span><span>•</span><span>{formatDestination(handoff.destination)}</span>
                     </div>
                     <p className="text-xs font-medium leading-5">{handoff.summary}</p>
                     {handoff.details.length > 0 ? (
                       <ul className="list-disc space-y-1 pl-4 text-xs leading-5">
-                        {handoff.details.map((detail) => (
-                          <li key={detail}>{detail}</li>
-                        ))}
+                        {handoff.details.map((detail) => <li key={detail}>{detail}</li>)}
                       </ul>
                     ) : null}
                     <button
@@ -386,11 +406,7 @@ export default function SupportChat() {
                       onClick={() => void copyHandoff()}
                       className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
                     >
-                      {copied ? (
-                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
-                      )}
+                      {copied ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
                       {copied ? "Copied" : "Copy handoff"}
                     </button>
                   </div>
@@ -416,13 +432,8 @@ export default function SupportChat() {
             </div>
           ) : null}
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-end gap-2 border-t border-black/10 p-3 dark:border-white/10"
-          >
-            <label htmlFor="function-hour-support-input" className="sr-only">
-              Ask Function Hour Help
-            </label>
+          <form onSubmit={handleSubmit} className="flex items-end gap-2 border-t border-black/10 p-3 dark:border-white/10">
+            <label htmlFor="function-hour-support-input" className="sr-only">Ask Function Hour Help</label>
             <textarea
               id="function-hour-support-input"
               rows={1}
