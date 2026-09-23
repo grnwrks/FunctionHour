@@ -7,6 +7,8 @@ import {
   Bot,
   Bookmark,
   CalendarDays,
+  Check,
+  Copy,
   Loader2,
   MapPin,
   MessageCircle,
@@ -40,6 +42,14 @@ type SupportResponse = {
   suggestedPrompts: string[];
   escalationRecommended: boolean;
   events: EventResult[];
+};
+
+type SupportHandoff = {
+  category: string;
+  destination: "function_hour_support" | "event_organizer" | "function_hour_and_organizer";
+  summary: string;
+  details: string[];
+  handoffText: string;
 };
 
 const initialMessage: ChatMessage = {
@@ -79,6 +89,12 @@ function formatPrice(price: number) {
   return `From $${price.toFixed(price % 1 === 0 ? 0 : 2)}`;
 }
 
+function formatDestination(destination: SupportHandoff["destination"]) {
+  if (destination === "event_organizer") return "Event organizer";
+  if (destination === "function_hour_and_organizer") return "Function Hour + organizer";
+  return "Function Hour support";
+}
+
 export default function SupportChat() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -87,13 +103,16 @@ export default function SupportChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [escalationRecommended, setEscalationRecommended] = useState(false);
+  const [handoff, setHandoff] = useState<SupportHandoff | null>(null);
+  const [handoffLoading, setHandoffLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (open) {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, open, loading]);
+  }, [messages, open, loading, handoff]);
 
   const historyForApi = useMemo(
     () =>
@@ -119,6 +138,8 @@ export default function SupportChat() {
     setLoading(true);
     setSuggestedPrompts([]);
     setEscalationRecommended(false);
+    setHandoff(null);
+    setCopied(false);
 
     try {
       const response = await fetch("/api/ai/support", {
@@ -167,6 +188,56 @@ export default function SupportChat() {
       ]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function prepareHandoff() {
+    if (handoffLoading || historyForApi.length === 0) return;
+
+    setHandoffLoading(true);
+    setCopied(false);
+
+    try {
+      const response = await fetch("/api/ai/support/handoff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: historyForApi.slice(-12),
+          currentPath: pathname || "/",
+        }),
+      });
+      const payload = (await response.json()) as SupportHandoff | { error?: string };
+
+      if (!response.ok || !("handoffText" in payload)) {
+        throw new Error(
+          "error" in payload && payload.error
+            ? payload.error
+            : "Unable to prepare support summary.",
+        );
+      }
+
+      setHandoff(payload);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to prepare support summary.";
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: message },
+      ]);
+    } finally {
+      setHandoffLoading(false);
+    }
+  }
+
+  async function copyHandoff() {
+    if (!handoff) return;
+
+    try {
+      await navigator.clipboard.writeText(handoff.handoffText);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   }
 
@@ -279,10 +350,51 @@ export default function SupportChat() {
             ) : null}
 
             {escalationRecommended ? (
-              <div className="rounded-2xl border border-amber-300/70 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
-                This looks like an issue that may need manual review. Have your
-                order/event details ready when contacting Function Hour support or
-                the event organizer.
+              <div className="space-y-3 rounded-2xl border border-amber-300/70 bg-amber-50 px-3.5 py-3 text-xs leading-5 text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+                <p>
+                  This looks like an issue that may need manual review. I can prepare a concise summary so you do not have to repeat the conversation.
+                </p>
+                {!handoff ? (
+                  <button
+                    type="button"
+                    onClick={() => void prepareHandoff()}
+                    disabled={handoffLoading}
+                    className="inline-flex items-center gap-2 rounded-full bg-amber-950 px-3 py-1.5 font-semibold text-white disabled:opacity-60 dark:bg-amber-100 dark:text-amber-950"
+                  >
+                    {handoffLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    Prepare support summary
+                  </button>
+                ) : (
+                  <div className="space-y-2 rounded-xl bg-white/70 p-3 text-zinc-800 dark:bg-black/20 dark:text-zinc-100">
+                    <div className="flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      <span>{handoff.category.replaceAll("_", " ")}</span>
+                      <span>•</span>
+                      <span>{formatDestination(handoff.destination)}</span>
+                    </div>
+                    <p className="text-xs font-medium leading-5">{handoff.summary}</p>
+                    {handoff.details.length > 0 ? (
+                      <ul className="list-disc space-y-1 pl-4 text-xs leading-5">
+                        {handoff.details.map((detail) => (
+                          <li key={detail}>{detail}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => void copyHandoff()}
+                      className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 dark:border-white/10 dark:bg-zinc-900 dark:text-white"
+                    >
+                      {copied ? (
+                        <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                      )}
+                      {copied ? "Copied" : "Copy handoff"}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : null}
 
