@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bot,
+  Bookmark,
   CalendarDays,
   Loader2,
   MapPin,
@@ -24,6 +25,7 @@ type EventResult = {
   city?: string;
   state?: string;
   startingPrice: number;
+  saved?: boolean;
   url: string;
 };
 
@@ -235,9 +237,17 @@ export default function SupportChat() {
                         className="block rounded-2xl border border-black/10 bg-white p-3 transition hover:border-zinc-300 hover:bg-zinc-50 dark:border-white/10 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
                         onClick={() => setOpen(false)}
                       >
-                        <p className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-white">
-                          {event.name}
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-white">
+                            {event.name}
+                          </p>
+                          {event.saved ? (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-1 text-[10px] font-medium text-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+                              <Bookmark className="h-3 w-3" aria-hidden="true" />
+                              Saved
+                            </span>
+                          ) : null}
+                        </div>
                         <div className="mt-2 space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
                           <p className="flex items-center gap-1.5">
                             <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
